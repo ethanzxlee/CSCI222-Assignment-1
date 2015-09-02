@@ -71,7 +71,7 @@ public:
     /*
      * Updates the database with all the current values of everything,
     */
-    void saveToDatabase();
+    void saveToDatabase(sql::Connection* connection, bool closeConnection);
     
     /*
      * Will update TABLE comments with a new comment
@@ -89,6 +89,13 @@ public:
      * fileRec::closeDatabase();
      */
     static void closeDatabase();
+    
+    /**
+     * Check if the specified fileRec exists in the database
+     * @param filePath The path of file to be checked
+     * @return true if the fileRec exists
+     */
+    static bool exists(std::string filePath, sql::Connection* connection, bool closeConnection);
 private:
     std::string fileName;
     std::string filePath;

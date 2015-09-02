@@ -6,14 +6,14 @@
 #include <string>
 using namespace std;
 
-int main()
+int ma0in()
 {
     fileRec::connectToDatabase();
     fileRec myRec;
-    string filename = "/home/dllyd/kappa.png";
+    string filename = "/home/zhexian/image.jpg";
     myRec.createData(filename);
     myRec.setRefNumber(0);
-    myRec.saveToDatabase();
+//    myRec.saveToDatabase();
     
     
     fileRec* newRec = fileRec::getFile(filename);

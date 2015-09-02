@@ -7,11 +7,16 @@
 
 #include <QApplication>
 
+#include "FileArchiver.h"
+
 int main(int argc, char *argv[]) {
-    // initialize resources, if needed
-    // Q_INIT_RESOURCE(resfile);
+    FileArchiver fileArchiver;
+    fileArchiver.insertNew("/home/zhexian/test.jpg", "a comment");
+        //fileArchiver.differs("/home/zhexian/image.jpg");
 
-    QApplication app(argc, argv);
-
-    return app.exec();
+    return 0;
+//    QApplication app(argc, argv);
+//
+//    return app.exec();
+//    return 0;
 }

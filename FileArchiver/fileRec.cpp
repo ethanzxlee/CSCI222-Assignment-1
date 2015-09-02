@@ -16,7 +16,7 @@
 // Will eventually be changed to my ip
 const char* dataBaseStr = "tcp://127.0.0.1:3306";	
 const char* dataBaseUserName = "root";		//Should probably also change?
-const char* dataBaseUserPassword = "mT+qLs$4vAyv6m9L";
+const char* dataBaseUserPassword = "1qaz2wsxmko0nji9";
 const char* dataBaseSchema = "ass2";
 
 const char* noDB = "Unable to open the database";
@@ -210,11 +210,11 @@ void fileRec::closeDatabase()
     invalid = true;
 }
 
-void fileRec::saveToDatabase()
+void fileRec::saveToDatabase(sql::Connection* connection, bool closeConnection)
 {
-    if (invalid)
-        throw (noDB);
-    
+//    if (invalid)
+//        throw (noDB);
+//    
     //TODO: probably need to update other tables as well
     const char* putFileRec = "insert into filerec values(?,?,?,?,?,?,?,?,?,?)";
     const char* putBlobTable = "insert into blobtable values(?,?)";
@@ -224,7 +224,7 @@ void fileRec::saveToDatabase()
      * because of foreign key constraint
      */
     sql::PreparedStatement *pstmt = NULL;
-    pstmt = dbcon->prepareStatement(putBlobTable);
+    pstmt = connection->prepareStatement(putBlobTable);
     pstmt->setString(1, tempName);
     
     //NOTE: large files currently break mysql
@@ -236,7 +236,7 @@ void fileRec::saveToDatabase()
     
     // Update TABLE filerec
     pstmt = NULL;
-    pstmt = dbcon->prepareStatement(putFileRec);
+    pstmt = connection->prepareStatement(putFileRec);
     pstmt->setString(1, filePath);
     pstmt->setString(2, fileHash);     // Hash of the full original
     pstmt->setString(3, currentHash);  // Hash of the full most recent
@@ -251,12 +251,32 @@ void fileRec::saveToDatabase()
     pstmt->executeUpdate();
     delete pstmt;
     
+    if (closeConnection) {
+        connection->close();
+    }
+    
     //TODO: other tables?
 }
 
 void fileRec::updateComment()
 {
 
+}
+
+bool fileRec::exists(std::string filePath, sql::Connection* connection, bool closeConnection) {
+    bool exists = false;
+    const char* checkFileExists = "SELECT filename FROM `filerec` WHERE filename = ?";
+
+    sql::PreparedStatement* statement = connection->prepareStatement(checkFileExists);
+    statement->setString(1, filePath);
+    sql::ResultSet* result = statement->executeQuery();
+    exists = result->rowsCount() > 0;
+    
+    if (closeConnection) {
+        connection->close();
+    }
+
+    return exists;
 }
 
 
