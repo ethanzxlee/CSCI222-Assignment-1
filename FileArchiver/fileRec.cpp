@@ -73,7 +73,7 @@ void fileRec::calculateFileHash()
 {
     MD5 md5;
     char fileP[256];
-    strcpy(fileP, tempName.c_str());
+    strcpy(fileP, filePath.c_str());
     fileHash = md5.digestFile(fileP);
     //std::cout << "fileHash: " << fileHash << std::endl;
 }
@@ -210,11 +210,11 @@ void fileRec::closeDatabase()
     invalid = true;
 }
 
-void fileRec::saveToDatabase(sql::Connection* connection, bool closeConnection)
+void fileRec::saveToDatabase()
 {
-//    if (invalid)
-//        throw (noDB);
-//    
+    if (invalid)
+        throw (noDB);
+    
     //TODO: probably need to update other tables as well
     const char* putFileRec = "insert into filerec values(?,?,?,?,?,?,?,?,?,?)";
     const char* putBlobTable = "insert into blobtable values(?,?)";
@@ -224,7 +224,7 @@ void fileRec::saveToDatabase(sql::Connection* connection, bool closeConnection)
      * because of foreign key constraint
      */
     sql::PreparedStatement *pstmt = NULL;
-    pstmt = connection->prepareStatement(putBlobTable);
+    pstmt = dbcon->prepareStatement(putBlobTable);
     pstmt->setString(1, tempName);
     
     //NOTE: large files currently break mysql
@@ -236,8 +236,134 @@ void fileRec::saveToDatabase(sql::Connection* connection, bool closeConnection)
     
     // Update TABLE filerec
     pstmt = NULL;
-    pstmt = connection->prepareStatement(putFileRec);
+    pstmt = dbcon->prepareStatement(putFileRec);
     pstmt->setString(1, filePath);
+    pstmt->setString(2, fileHash);     // Hash of the full original
+    pstmt->setString(3, currentHash);  // Hash of the full most recent
+    pstmt->setInt(4, refNumber);    //Reference number 0 for original
+    pstmt->setInt(5, numVersions);  // Number of versions stored
+    pstmt->setInt(6, length);       // Length of the reference version
+    pstmt->setInt(7, modifyTime);   //TODO: change 7 and 8 
+    pstmt->setInt(8, modifyTime);
+    pstmt->setString(9, tempName);  //TODO: change 9 and 10 they are the name of the original blob in the blobtable
+    pstmt->setString(10, tempName);
+    
+    pstmt->executeUpdate();
+    delete pstmt;
+    
+  
+    //TODO: other tables?
+}
+
+void fileRec::updateComment()
+{
+
+}
+
+
+/// added by zhe xian, not sure if this is ok?
+
+bool fileRec::exists(std::string filePath, sql::Connection* connection, bool closeConnection) {
+    bool exists = false;
+    const char* checkFileExists = "SELECT filename FROM `filerec` WHERE filename = ?";
+
+    sql::PreparedStatement* statement = connection->prepareStatement(checkFileExists);
+    statement->setString(1, filePath);
+    sql::ResultSet* result = statement->executeQuery();
+    exists = result->rowsCount() > 0;
+    
+    if (closeConnection) {
+        connection->close();
+    }
+
+    return exists;
+}
+
+fileRec::fileRec() {
+    
+}
+
+fileRec::fileRec(std::string filePath, std::string uuid) {
+     // Find the filename
+    /*
+     * Not sure if needed
+     */
+   // std::size_t found = filePath.find_last_of("/\\");
+    fileName = filePath;
+
+    this->filePath = "/tmp/" + uuid;
+    
+    /*
+     * This is the name of the blob for the first occurance it will be the same as the filepath
+     * after that it will need something unique about it maybe just + 1
+     */
+    this->tempName = uuid;
+
+    /*
+     * Get the modification time as a unix timestamp (time since epoch)
+     */
+    modifyTime = getFileEpoch(filePath);
+
+    /*
+     * Get the filehash for the entire file
+     */
+    calculateFileHash();
+    
+    /*
+     * Since its the first version the currentHash is the same as the original
+     */
+    currentHash = fileHash;
+
+    /*
+     * Get the hashes per chunk
+     */
+    calculateFileBlockHashes();
+
+    /*
+     * Get the size of the file
+     */
+    length = fileSize(filePath.c_str());
+    //std::cout << length << std::endl;
+
+    /*
+     * This is the first version, or if not will be updated elsewhere
+     */
+    numVersions = 1;
+
+    /*
+     * This is the original so its 0, if its not it will be updated elsewhere
+     */
+    refNumber = 0;
+}
+
+void fileRec::saveToDatabase(sql::Connection* connection, bool closeConnection)
+{
+//    if (invalid)
+//        throw (noDB);
+//    
+    //TODO: probably need to update other tables as well
+    const char* putFileRec = "insert into filerec values(?,?,?,?,?,?,?,?,?,?)";
+//    const char* putBlobTable = "insert into blobtable values(?,?)";
+    
+    /*
+     * Update TABLE blobtable, this needs to be done before filerec
+     * because of foreign key constraint
+     */
+    sql::PreparedStatement *pstmt = NULL;
+//    pstmt = connection->prepareStatement(putBlobTable);
+//    pstmt->setString(1, tempName);
+//    
+//    //NOTE: large files currently break mysql
+//    std::ifstream ins(filePath.c_str());
+//    pstmt->setBlob(2, &ins);
+//    
+//    pstmt->executeUpdate();
+//    delete pstmt;
+    
+    // Update TABLE filerec
+    pstmt = NULL;
+    pstmt = connection->prepareStatement(putFileRec);
+    pstmt->setString(1, fileName);
     pstmt->setString(2, fileHash);     // Hash of the full original
     pstmt->setString(3, currentHash);  // Hash of the full most recent
     pstmt->setInt(4, refNumber);    //Reference number 0 for original
@@ -258,26 +384,5 @@ void fileRec::saveToDatabase(sql::Connection* connection, bool closeConnection)
     //TODO: other tables?
 }
 
-void fileRec::updateComment()
-{
 
-}
-
-bool fileRec::exists(std::string filePath, sql::Connection* connection, bool closeConnection) {
-    bool exists = false;
-    const char* checkFileExists = "SELECT filename FROM `filerec` WHERE filename = ?";
-
-    sql::PreparedStatement* statement = connection->prepareStatement(checkFileExists);
-    statement->setString(1, filePath);
-    sql::ResultSet* result = statement->executeQuery();
-    exists = result->rowsCount() > 0;
-    
-    if (closeConnection) {
-        connection->close();
-    }
-
-    return exists;
-}
-
-
-
+///
