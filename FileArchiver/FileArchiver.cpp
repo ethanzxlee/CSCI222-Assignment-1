@@ -5,12 +5,9 @@
  * Created on 1 September 2015, 3:22 PM
  */
 
-
-#include <cppconn/exception.h>
-
 #include "FileArchiver.h"
 
-FileArchiver::FileArchiver() {
+FileArchiver::FileArchiver() throw (sql::SQLException) {
     sql::Connection* connection = connectDB(true);
     delete connection;
 }
@@ -21,92 +18,119 @@ FileArchiver::FileArchiver(const FileArchiver& orig) {
 FileArchiver::~FileArchiver() {
 }
 
-bool FileArchiver::differs(std::string filename) {
-    bool differs = false;
-    if (exists(filename)) {
-        std::string compressFilename = filename.append(".tmp");
-        if (compressFile(filename, compressFilename)) {
-            fileRec* localFile = new fileRec();
-            localFile->createData(compressFilename);
-            fileRec* remoteFile = fileRec::getFile(filename);
-            differs = remoteFile->getCurrentHash() == localFile->getCurrentHash();
-            delete remoteFile;
-            delete localFile;
-            std::remove(compressFilename.c_str());
-        };
+bool FileArchiver::differs(std::string filePath) {
+    bool differs = true;
+    boost::uuids::random_generator generator;
+    boost::uuids::uuid uniqueId = generator();
+    std::string tempFilePath = "/tmp/" + boost::uuids::to_string(uniqueId);
+    
+    if (compressFile(filePath, tempFilePath)) {
+        sql::Connection* connection = connectDB(false);
+
+        const char* sql_selectLatestHash = "SELECT curhash FROM filerec WHERE filename = ?";
+        sql::PreparedStatement statement = connection->prepareStatement(sql_selectLatestHash);
+        statement->setString(1, filePath);
+        sql::ResultSet* result = statement->executeQuery();
+
+        if (result->next()) {
+            uint32_t dbHash = result->getInt(1);
+            uint32_t localHash = calculateFileHash(tempFilePath);
+            differs = dbHash == localHash;
+        }
+        
+        connection.close();
+        delete connection;
+        delete statement; 
+        delete result;
+        std::remove(tempFilePath.c_str());
     }
+    
     return differs;
 }
 
-bool FileArchiver::exists(std::string filename) {
-    sql::Connection* connection = connectDB(false);
-    bool exists = fileRec::exists(filename, connection, true);
+bool FileArchiver::exists(std::string filePath) {
+    bool exists = false;
+    sql::Connection* connection = connectDB(false); 
+    
+    const char* sql_checkFileExists = "SELECT count() FROM `filerec` WHERE filename = ?";
+    sql::PreparedStatement* statement = connection->prepareStatement(sql_checkFileExists);
+    statement->setString(1, filePath);
+    
+    sql::ResultSet* result = statement->executeQuery();  
+    if (result->next()) {
+        exists = result->getInt(1) == 1;
+    }
+    
+    connection->close();
     delete connection;
+    delete statement;
+    delete result;
+    
     return exists;
 }
 
-void FileArchiver::insertNew(std::string filename, std::string comment) {
-    sql::Connection* connection = connectDB(false);
-    if (!fileRec::exists(filename, connection, false)) {
-        boost::uuids::random_generator generator;
-        boost::uuids::uuid uniqueId = generator();
-        const char* uniqueIdCount = "SELECT count(*) FROM `blobtable` WHERE tempname = ?";
-        sql::PreparedStatement* statement = connection->prepareStatement(uniqueIdCount);
-        statement->setString(1, boost::uuids::to_string(uniqueId));
-        sql::ResultSet* result = statement->executeQuery();
+void FileArchiver::insertNew(std::string filePath, std::string comment) {
+    boost::uuids::random_generator generator;
+    boost::uuids::uuid uniqueId = generator();
+    std::string tempFilePath = "/tmp/" + boost::uuids::to_string(uniqueId);
 
-        while (result->next() && result->getInt(1) > 0) {
-            delete result;
-            delete statement;
-            uniqueId = generator();
-            statement = connection->prepareStatement(uniqueIdCount);
-            statement->setString(1, boost::uuids::to_string(uniqueId));
-            result = statement->executeQuery();
-        }
-
-        if (statement != NULL) {
-            delete statement;
-        }
-        if (result != NULL) {
-            delete result;
-        }
-
-        std::string tempName = "/tmp/" + boost::uuids::to_string(uniqueId);
-
-        if (compressFile(filename, tempName)) {
-            fileRec compressFileRec;
-            compressFileRec.createData(tempName);
-            compressFileRec.setRefNumber(0);
-            compressFileRec.setFileName(filename);
-            compressFileRec.saveToDatabase(connection, false);
-
-            std::ifstream tempFile(tempName.c_str());
-            const char* insertBlob = "INSERT INTO `blobtable` VALUES (?, ?)";
-
-            statement = connection->prepareStatement(insertBlob);
-            statement->setString(1, boost::uuids::to_string(uniqueId));
-            statement->setBlob(2, &tempFile);
-            statement->execute();
-
-            delete statement;
-            tempFile.close();
-            std::remove(tempName.c_str());
-        };
+    if (compressFile(filename, tempFilePath)) {
+        sql::Connection* connection = connectDB(false);
+        
+        fileRec* newFileRec = new fileRec();
+        newFileRec->createData(filePath, tempFilePath, comment);
+        newFileRec->save(connection);
+        
+        delete newFileRec;        
         connection->close();
         delete connection;
-    }
+        std::remove(tempFilePath.c_str());
+    };
 }
 
-void FileArchiver::update(std::string filename, std::string comment) {
-    if (exists(filename)) {
+void FileArchiver::update(std::string filePath, std::string comment) {
+    sql::Connection connection = connectDB(false);
+
+    const char* selectBlob = "SELECT filedata, currentversion FROM filerec WHERE filename = ?";
+    sql::PreparedStatement* statement = connection->prepareStatement();
+    statement->setString(1, filePath);
+    sql::ResultSet* result = statement->executeQuery();
+
+    if (result->next()) {
+        boost::uuids::random_generator generator;
+        boost::uuids::uuid uniqueId1 = generator();
+        std::string tempFilePath = "/tmp/" + boost::uuids::to_string(uniqueId1);
+        std::ofstream tempFile(tempFilePath.c_str());
+
+        if (tempFile.is_open()) {
+            std::istream* blobStream = result->getBlob(1);
+            tempFile << blobStream->rdbuf();
+            tempFile.close();
+            
+            boost::uuids::uuid uniqueId2 = generator();
+            std::string rebuildFilePath = "/tmp/" + boost::uuids::to_string(uniqueId2);
+            
+            
+            
+            std::ofstream file(tempFilePath.c_str(), std::ofstream::app);
+            
+                
+  
+        }
 
     }
+
+    delete statement;
+    delete result;
+
+    connection.close();
+    delete connection;
 }
 
 sql::Connection* FileArchiver::connectDB(bool checkSchema) {
     sql::Driver* driver = get_driver_instance();
     sql::Connection* connection = driver->connect(DB_HOSTNAME, DB_USERNAME, DB_PASSWORD);
-
+    
     if (checkSchema) {
         sql::PreparedStatement* statement = NULL;
 
