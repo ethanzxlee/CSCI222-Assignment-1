@@ -1,82 +1,58 @@
-DROP SCHEMA IF EXISTS `ass2` ;
-CREATE SCHEMA IF NOT EXISTS `ass2` DEFAULT CHARACTER SET latin1 COLLATE
+DROP SCHEMA IF EXISTS `FileArchiver` ;
+CREATE SCHEMA IF NOT EXISTS `FileArchiver` DEFAULT CHARACTER SET latin1 COLLATE
 latin1_swedish_ci ;
-USE `ass2` ;
+USE `FileArchiver` ;
 
 -- -----------------------------------------------------
--- Table `ass2`.`blobtable`
+-- Table `FileArchiver`.`filerec`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `ass2`.`blobtable` (
-`tempname` VARCHAR(45) NOT NULL ,
-`filedata` MEDIUMBLOB NULL,
-PRIMARY KEY (`tempname`) )
-ENGINE = InnoDB;
--- -----------------------------------------------------
--- Table `ass2`.`filerec`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `ass2`.`filerec` (
+CREATE TABLE IF NOT EXISTS `FileArchiver`.`filerec` (
 `filename` VARCHAR(255) NOT NULL ,
-`curlhash` VARCHAR(33) NOT NULL ,	-- TODO: pretty sure this should be a varchar if were going to use md5
-`ovhash` VARCHAR(33) NOT NULL,
-`currentversion` INT(11) NULL ,
-`nversion` INT(11) NULL ,
-`length` INT(11) NULL ,
-`mtnsec` INT(11) NULL ,
-`mtsec` INT(11) NULL ,
-`tempname` VARCHAR(45) NOT NULL,
-`blobtable_tempname` VARCHAR(45) NOT NULL,
-PRIMARY KEY (`filename`),
-FOREIGN KEY (`blobtable_tempname`)
-	REFERENCES blobtable(`tempname`))
+`curlhash` INT(24) UNSIGNED NOT NULL ,
+`ovhash` INT(24) UNSIGNED NOT NULL,
+`currentversion` INT(11) NOT NULL ,
+`nversion` INT(11) NOT NULL ,
+`length` INT(11) NOT NULL ,
+`mtsec` INT(11) NOT NULL ,
+`filedata` MEDIUMBLOB NOT NULL,
+PRIMARY KEY (`filename`))
 ENGINE = InnoDB;
 -- -----------------------------------------------------
--- Table `ass2`.`commentstable`
+-- Table `FileArchiver`.`fileblkhashes`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `ass2`.`commentstable` (
-`idcommentstable` INT(11) NOT NULL ,
-`filerec` VARCHAR(255) NOT NULL,
-`commentnum` INT(11) NOT NULL,
-`commenttxt` MEDIUMTEXT NULL,
-PRIMARY KEY (`idcommentstable`),
-FOREIGN KEY (`filerec`) 
-	REFERENCES filerec(`filename`))
-ENGINE = InnoDB;
--- -----------------------------------------------------
--- Table `ass2`.`fileblkhashes`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `ass2`.`fileblkhashes` (
-`idfileblkhashes` INT(11) NOT NULL ,
+CREATE TABLE IF NOT EXISTS `FileArchiver`.`fileblkhashes` (
+`idfileblkhashes` INT(24) NOT NULL AUTO_INCREMENT,
 `fileref` VARCHAR(255) NOT NULL,
 `blknum` VARCHAR(33) NOT NULL,
-`hashval` VARCHAR(33) NOT NULL,
+`hashval` INT(24) UNSIGNED NOT NULL,
 PRIMARY KEY (`idfileblkhashes`),
 FOREIGN KEY (`fileref`)
 	REFERENCES filerec(`filename`))
 ENGINE = InnoDB;
 -- -----------------------------------------------------
--- Table `ass2`.`versionrec`
+-- Table `FileArchiver`.`versionrec`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `ass2`.`versionrec` (
-`idversionrec` INT(11) NOT NULL ,
+CREATE TABLE IF NOT EXISTS `FileArchiver`.`versionrec` (
+`idversionrec` INT(11) NOT NULL AUTO_INCREMENT,
 `fileref` VARCHAR(255) NOT NULL,
 `versionnum` INT(11) NOT NULL,
 `length` INT(11) NOT NULL,
 `mtsec` INT(11) NOT NULL,
-`mtnsec` INT(11) NOT NULL,
-`ovhash` VARCHAR(33) NOT NULL,
+`ovhash` INT(24) UNSIGNED NOT NULL,
+`commenttxt` MEDIUMTEXT NULL,
 PRIMARY KEY (`idversionrec`),
 FOREIGN KEY (`fileref`) 
 	REFERENCES filerec(`filename`))
 ENGINE = InnoDB;
 -- -----------------------------------------------------
--- Table `ass2`.`blktable`
+-- Table `FileArchiver`.`blktable`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `ass2`.`blktable` (
-`idblktable` INT(11) NOT NULL ,
+CREATE TABLE IF NOT EXISTS `FileArchiver`.`blktable` (
+`idblktable` INT(11) NOT NULL AUTO_INCREMENT,
 `version` INT(11) NOT NULL,
 `length` INT(11) NOT NULL,
 `blknum` INT(11) NOT NULL,
-`hash` VARCHAR(33) NOT NULL,
+`hash` INT(24) UNSIGNED NOT NULL,
 `data` MEDIUMBLOB NOT NULL,
 PRIMARY KEY (`idblktable`),
 FOREIGN KEY (`version`) 
