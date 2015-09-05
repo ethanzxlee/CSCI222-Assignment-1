@@ -10,6 +10,8 @@ const int BLOCK_SIZE = 4096;
 
 class fileRec {
 public:
+    
+    fileRec();
 //Setters
     /*
      * takes the full filepath and will set the name, length, filehash, tempName based on the filename and
@@ -71,7 +73,8 @@ public:
     /*
      * Updates the database with all the current values of everything,
     */
-    void saveToDatabase(sql::Connection* connection, bool closeConnection);
+    void saveToDatabase();
+
     
     /*
      * Will update TABLE comments with a new comment
@@ -89,13 +92,7 @@ public:
      * fileRec::closeDatabase();
      */
     static void closeDatabase();
-    
-    /**
-     * Check if the specified fileRec exists in the database
-     * @param filePath The path of file to be checked
-     * @return true if the fileRec exists
-     */
-    static bool exists(std::string filePath, sql::Connection* connection, bool closeConnection);
+
 private:
     std::string fileName;
     std::string filePath;

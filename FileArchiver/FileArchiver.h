@@ -11,6 +11,7 @@
 #include <string.h>
 #include <fstream>
 #include <stdio.h>
+#include <vector>
 
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/copy.hpp>
@@ -23,21 +24,17 @@
 #include <cppconn/prepared_statement.h>
 #include <cppconn/driver.h>
 #include <cppconn/resultset.h>
+#include <cppconn/exception.h>
 
 #include "fileRec.h"
+#include "helperFunc.h"
 
 class FileArchiver {
 public:
     /**
      * Constructor
      */
-    FileArchiver();
-    
-    /**
-     * Copy constructor
-     * @param orig
-     */
-    FileArchiver(const FileArchiver& orig);
+    FileArchiver() throw (sql::SQLException);
     
     /**
      * Destructor
@@ -49,37 +46,34 @@ public:
      * @param filename The path of the file to be checked
      * @return true if different, false if same 
      */
-    bool differs(std::string filename);
+    bool differs(const std::string& filePath);
     
     /**
      * Check if the file exists in the database
      * @param filename The path of the file to be checked
      * @return true if the file exists in the database
      */
-    bool exists(std::string filename);
+    bool exists(const std::string& filePath);
     
     /**
      * Insert a new file into the database
      * @param filename The path of the file to be inserted to the database
      * @param comment The comment of the insertion
      */
-    void insertNew(std::string filename, std::string comment);
+    void insertNew(const std::string& filePath, const std::string& comment);
     
     /**
      * Update the newer version of file to the database
      * @param filename The path of the file to be updated to the database
      * @param comment The comment of the update
      */
-    void update(std::string filename, std::string comment);
+    void update(const std::string& filePath, const std::string& comment);
+
     
-    /**
-     * Retrieve a particular version of file?
-     * @param version 
-     * @param filename
-     * @param retrieveToFileName
-     */
-    void retrieveVersion(int version, std::string filename, std::string retrieveToFileName);
-    
+    void retrieveFile(const std::string& filePath, const std::string& destinationFilePath, const int versionNum, sql::Connection* connection);
+    void retrieveFile(const std::string& filePath, const std::string& destinationFilePath, const int versionNum);
+    void retrieveFile(const std::string& filePath, const std::string& destinationFilePath, sql::Connection connection); // private?
+
     void getCurrentVersionNumber(std::string filename);
     
     void getHashOfLastSaved(std::string filename);
@@ -96,6 +90,8 @@ private:
     const char* DB_USERNAME = "root";
     const char* DB_PASSWORD = "1qaz2wsxmko0nji9";
     const char* DB_SCHEMA = "FileArchiver";
+    
+    
     /**
      * Create a connection to the MySQL database and validate the schema if specified.
      * The connection has to be closed as usual after using it.
