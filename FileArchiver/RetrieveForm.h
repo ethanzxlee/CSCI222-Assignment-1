@@ -1,0 +1,36 @@
+/* 
+ * File:   RetrieveForm.h
+ * Author: parallels
+ *
+ * Created on September 2, 2015, 9:08 PM
+ */
+
+#ifndef _RETRIEVEFORM_H
+#define	_RETRIEVEFORM_H
+
+#include "ui_RetrieveForm.h"
+#include <iostream>
+#include "qfiledialog.h"
+#include "qmessagebox.h"
+#include <QInputDialog>
+#include <QIcon>
+
+class RetrieveForm : public QDialog {
+    Q_OBJECT
+public:
+    RetrieveForm();
+    virtual ~RetrieveForm();
+    QString getFilename();
+    QString getDirectoryPath();
+
+public slots:
+    void selectionFile(); 
+    void okFunc();
+    void cancelFunc();
+private:
+    QString fileName;
+    QString directoryPath;
+    Ui::RetrieveForm widget;
+};
+
+#endif	/* _RETRIEVEFORM_H */
