@@ -1,5 +1,5 @@
 /* 
- * File:   extraFunctions.cpp
+ * File:   helperFuncs.cpp
  * Author: dllyd
  * 
  * Created on September 3, 2015, 1:51 AM
@@ -17,9 +17,9 @@ uint32_t calculateFileHash(const std::string& filePath)
     int fileLength = fileSize(filePath);
     std::ifstream file(filePath.c_str(), std::ios::binary);   
     char* key = new char[fileLength];
-    file.read((char*)key, fileLength);    
+    file.read(key, fileLength);    
     MurmurHash3_x86_128(key, fileLength, SEED_VALUE, hash);
-    delete key;
+    delete [] key;
 
     /*
      * There are 4 hash's only using the first one atm

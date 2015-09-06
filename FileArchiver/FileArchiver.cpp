@@ -6,7 +6,6 @@
  */
 
 #include "FileArchiver.h"
-#include "helperFuncs.h"
 
 FileArchiver::FileArchiver() throw (sql::SQLException) {
     sql::Connection* connection = connectDB(true);
@@ -27,7 +26,7 @@ bool FileArchiver::differs(const std::string& filePath) {
         sql::Connection* connection = connectDB(false);
 
         const char* sql_selectLatestHash = "SELECT curhash FROM filerec WHERE filename = ?";
-        sql::PreparedStatement statement = connection->prepareStatement(sql_selectLatestHash);
+        sql::PreparedStatement* statement = connection->prepareStatement(sql_selectLatestHash);
         statement->setString(1, filePath);
         sql::ResultSet* result = statement->executeQuery();
 
@@ -37,7 +36,7 @@ bool FileArchiver::differs(const std::string& filePath) {
             differs = dbHash == localHash;
         }
         
-        connection.close();
+        connection->close();
         delete connection;
         delete statement; 
         delete result;
@@ -73,15 +72,12 @@ void FileArchiver::insertNew(const std::string& filePath, const std::string& com
     boost::uuids::uuid uniqueId = generator();
     std::string tempFilePath = "/tmp/" + boost::uuids::to_string(uniqueId);
 
-    if (compressFile(filePath, tempFilePath)) {        
-        fileRec* newFileRec = new fileRec();
-        newFileRec->createData(filePath, tempFilePath, comment);
-        
+    if (compressFile(filePath, tempFilePath)) {  
         sql::Connection* connection = connectDB(false);
-        newFileRec->save(connection);
-        connection->close();
-
-        delete newFileRec;        
+        fileRec newFileRec;
+        newFileRec.createData(filePath, tempFilePath, comment, connection);
+        newFileRec.saveToDatabase();
+        connection->close();       
         delete connection;
         std::remove(tempFilePath.c_str());
     };
@@ -163,7 +159,7 @@ void FileArchiver::retrieveFile(const std::string& filePath, const std::string& 
 
 void FileArchiver::retrieveFile(const std::string& filePath, const std::string& destinationFilePath, const int versionNum, sql::Connection* connection) {   
     const char* selectBlob = "SELECT filedata, currentversion FROM filerec WHERE filename = ?";
-    sql::PreparedStatement* statement = connection->prepareStatement();
+    sql::PreparedStatement* statement = connection->prepareStatement(selectBlob);
     statement->setString(1, filePath);
     sql::ResultSet* result = statement->executeQuery();
 
@@ -178,21 +174,23 @@ void FileArchiver::retrieveFile(const std::string& filePath, const std::string& 
             tempFile << blobStream->rdbuf();
             tempFile.close();
             
-            if (compressFile(tempFile, destinationFilePath)) {
+            if (compressFile(tempFilePath, destinationFilePath)) {
                 std::remove(tempFilePath.c_str());
                 std::ofstream destinationFile(destinationFilePath.c_str(), std::ofstream::ate);
-                const std::vector<versionRec> allVersions = versionRec::get(connection, versionNum); // TODO not sure what the function would be called
                 
-                for (std::vector<versionRec>::const_iterator version = allVersions.begin(); version != allVersions.end(); ++version) {
-                    const std::vector<Block> allBlocks = version->getBlocks(); // TODO not sure what the function would be called
+                fileRec existingFileRec;
+                std::vector<versionRec> allVersions = existingFileRec.returnVector(filePath, connection); 
+                
+                for (std::vector<versionRec>::iterator version = allVersions.begin(); version != allVersions.end(); ++version) {
+                    std::vector<Block> allBlocks = version->getBlocks(); // TODO not sure what the function would be called
                    
-                    for (std::vector<Block>::const_iterator block = allBlocks.begin(); block != allBlocks.end(); ++block) {
-                        int blockNum = *block->blockNum;
+                    for (std::vector<Block>::iterator block = allBlocks.begin(); block != allBlocks.end(); ++block) {
+                        int blockNum = (*block).blockNum;
                         std::string zippedBlockPath = "/tmp/zip" + blockNum;
                         std::string unzippedBlockPath = "/tmp/unzip" + blockNum;
                         
                         std::ofstream zippedBlock(zippedBlockPath.c_str());
-                        zippedBlock << *block->bytes;
+                        zippedBlock << (*block).bytes;
                         zippedBlock.close();
 
                         if (decompressFile(zippedBlockPath.c_str(), unzippedBlockPath.c_str())) {

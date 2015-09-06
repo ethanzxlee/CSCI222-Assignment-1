@@ -27,7 +27,7 @@
 #include <cppconn/exception.h>
 
 #include "fileRec.h"
-#include "helperFunc.h"
+#include "helperFuncs.h"
 
 class FileArchiver {
 public:
@@ -72,7 +72,7 @@ public:
     
     void retrieveFile(const std::string& filePath, const std::string& destinationFilePath, const int versionNum, sql::Connection* connection);
     void retrieveFile(const std::string& filePath, const std::string& destinationFilePath, const int versionNum);
-    void retrieveFile(const std::string& filePath, const std::string& destinationFilePath, sql::Connection connection); // private?
+    void retrieveFile(const std::string& filePath, const std::string& destinationFilePath, sql::Connection* connection); 
 
     void getCurrentVersionNumber(std::string filename);
     
@@ -80,7 +80,7 @@ public:
     
     void getComment(std::string filename, int versionnum);
     
-    void getVersionInfo(std::string filename); //return collection why?
+    void getVersionInfo(std::string filename);
     
     void setReference(std::string filename, int versionnum, std::string comment);
     
@@ -106,7 +106,7 @@ private:
      * @param destination The path of the compressed file
      * @return true if the file is compressed successfully
      */
-    bool compressFile(std::string source, std::string destination); 
+    bool compressFile(const std::string& source, const std::string& destination); 
     
     /**
      * Decompress a file on disk
@@ -114,7 +114,7 @@ private:
      * @param destination The path of decompressed file
      * @return true if the file is decompressed successfully
      */
-    bool decompressFile(std::string source, std::string destination);
+    bool decompressFile(const std::string& source, const std::string& destination);
 };
 
 #endif	/* FILEARCHIVER_H */

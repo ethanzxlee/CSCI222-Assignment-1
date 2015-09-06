@@ -1,12 +1,12 @@
 /* 
- * File:   extraFunctions.h
+ * File:   helperFuncs.h
  * Author: dllyd
  *
  * Created on September 3, 2015, 1:51 AM
  */
 
 #ifndef HELPER_FUNCS_H
-#define HELPER_FUNCS_H
+#define	HELPER_FUNCS_H
 #include <string>
 #include <vector>
 #include <fstream>
@@ -62,4 +62,4 @@ std::size_t fileSize(const std::string& filePath);
  */
 std::vector<uint32_t> calculateFileBlockHashes(const std::string& filePath);
 
-#endif  /* HELPER_FUNCS_H */
+#endif	/* HELPER_FUNCS_H */
