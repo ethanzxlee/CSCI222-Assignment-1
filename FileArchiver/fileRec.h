@@ -5,127 +5,97 @@
 
 #include "mysql_connection.h"
 #include "mysql_driver.h"
-
-const int BLOCK_SIZE = 4096;
+#include "MurMurHash3.h"
+#include "versionRec.h"
 
 class fileRec {
 public:
-//Setters
-    /*
-     * takes the full filepath and will set the name, length, filehash, tempName based on the filename and
-     * numVersions = 1
-     * NOTE: was setFilePath
+    /**
+     * Fills in this fileRec with all information based on the tempPath
+     * Still needs saveToDatabase to be called to commit it to database
+     * @param filePath The filepath to the original file being added
+     * @param tempPath The filepath to the temporary zipped file, this will
+     * be added to the database as the blob
+     * @param comment This is the comment that will be associated with this version
+     * of the file in the original versionrec table
+     * @param dbconn A valid connection to the database
     */
-    void createData(const std::string& filePath);
-
-    void setFileName(const std::string& x) { fileName = x; }
+    void createData(const std::string& filePath, const std::string& tempPath,
+                    const std::string& comment, sql::Connection *dbconn);
     
-    /*
-     * Pretty sure these commented out ones are not needed because createData
-     * sets them.
+    /**
+     * Used to create and populate a fileRec with data that already exists in the db
+     * @param filePath The path to the original file
+     * @param dbcon A valid connection to the database
      */
-    //void setTempName(const std::string& x) { tempName = x; }
-    //void setModifyTime(const std::string& x) { modifyTime = x; }
-    //void setLength(const std::string& x) { length = x; }
-    //void setFileHash(const std::string& x) { fileHash = x; }
+    void createExisting(const std::string& filePath, sql::Connection *dbcon);
+    
+    /**
+     * Gives back a vector containing all versionRecs that are associated with this 
+     * filePath.
+     * @param filePath Path to the original file
+     * @param dbconn A valid connection to the database
+     * @return 
+     */
+    std::vector<versionRec> returnVector(const std::string& filePath, sql::Connection *dbcon);
+    
+    /**
+     * Saves whats in memory to the database, assuming that this is a new file (the original)
+     */
+    void saveToDatabase();
+    
+    /**
+     * Setters
+     * NOTE: not sure which ones are needed atm
+     */
+    void setTempPath(const std::string& x) { tempPath = x; }
+    void setModifyTime(const long int& x) { modifyTime = x; }
+    void setLength(const long int& x) { length = x; }
+    void setFileHash(const long int& x) { fileHash = x; }
     void setNumVersions(const int& x) { numVersions = x; }
     void setRefNumber(const int& x) { refNumber = x; }
-    
-//Add to collections
-    //void addBlockHashes(const int& x) { blockHashes.push_back(x); }
     void addToVersionIds(const int& x) { versionIds.push_back(x); }
     void addToComments(const std::string& x) { comments.push_back(x); }
 
-//Getters
-    std::string getFilename() { return fileName; }
-    std::string getTempName() { return tempName; }
+    /**
+     * Getters
+     * NOTE: not sure which ones are needed atm
+     */
+    std::string getTempPath() { return tempPath; }
     long int getModifyTime() { return modifyTime; }
     std::size_t getLength() { return length; }
     int getNumVersions() { return numVersions; }
-    
-    /*
-     * This is hash of the original file
-     */
-    std::string getFileHash() { return fileHash; }
-    
-    /*
-     * So this is the hash of the most recently updated version of the file
-     */
-    std::string getCurrentHash() { return currentHash; }
-    
+    uint32_t getFileHash() { return fileHash; }
+    uint32_t getCurrentHash() { return currentHash; }
     int getRefNumber() { return refNumber; }
-    std::vector<std::string> getBlockHashes() { return blockHashes; }
+    std::vector<uint32_t> getBlockHashes() { return blockHashes; }
     std::vector<int> getVersionIds() { return versionIds; }
-    std::vector<std::string> getComments() { return comments; updateComment(); }
+    std::vector<std::string> getComments() { return comments; }
 
-//Other
+    
     /*
-     * Reads in the specified file with the full filepath e.g. /home/username/file.txt 
-     * and then returns a fileRec with all private members filled out. 
-     * It gets this from the database, returns NULL if it doesn't exist.
-     * Example usage:
-     * fileRec* someFile = getFile("/home/username/file.txt")
+     * NOTE: Not sure if still needed, or if it is it needs to take in a sql con
+     * @param filePath The filepath to the original version of the file requested
+     * @return  A new fileRec* with all members filled out
     */
     static fileRec* getFile(const std::string& filePath) throw(const char*);
-
-    /*
-     * Updates the database with all the current values of everything,
-    */
-    void saveToDatabase(sql::Connection* connection, bool closeConnection);
-    
-    /*
-     * Will update TABLE comments with a new comment
-     */
-    void updateComment();
-
-    /*
-     * connectToDatabase should be called once at the beginning like.
-     * fileRec::connectToDatabase();
-     */
-    static void connectToDatabase();
-    
-    /*
-     * closeDatabase() should be called once at the end
-     * fileRec::closeDatabase();
-     */
-    static void closeDatabase();
-    
-    /**
-     * Check if the specified fileRec exists in the database
-     * @param filePath The path of file to be checked
-     * @return true if the fileRec exists
-     */
-    static bool exists(std::string filePath, sql::Connection* connection, bool closeConnection);
 private:
-    std::string fileName;
     std::string filePath;
-    std::string tempName;
-    long int modifyTime;		//Unix timestamp, may change to string
+    std::string tempPath;
+    long int modifyTime;
     std::size_t length;
     int numVersions;
-    std::string fileHash;		//Hash of the entire original file in 1 go
-    std::string currentHash;        //Hash of the most recently saved version
-    int refNumber;	// 0 for the original file
+    uint32_t fileHash;              //Hash of the entire original file
+    uint32_t currentHash;           //Hash of the most recently saved version
+    int refNumber;
 
-    /*
-     * These are hashes that are taken from size 4096 chunks out of the file
-     * There should be ceil(length / 4096) of them for the original file
-     * NOTE: not sure how this works when a file is updated yet
-    */
-    std::vector<std::string> blockHashes;		
-
-
+    std::vector<uint32_t> blockHashes;      
     std::vector<int> versionIds;
     std::vector<std::string> comments;
 private:
-    void calculateFileHash();
-    void calculateFileBlockHashes();
-    std::size_t fileSize(std::string filename);
+    void saveBlockHashes();
 
-    //Database variables
-    static bool invalid;
     static sql::Connection *dbcon;
-    static sql::Driver *driver;
 };
 
 #endif /* FILE_REC_H */

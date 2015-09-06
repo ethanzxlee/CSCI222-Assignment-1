@@ -1,27 +1,68 @@
 /*
- * Just for quickly testing fileRec
+ * Just for quickly testing fileRec and versionRec
  * I commented out main.cpp when using this
 */
 #include "fileRec.h"
+#include "versionRec.h"
+#include "helperFuncs.h"
 #include <string>
+
+#include "cppconn/driver.h"
+#include "cppconn/exception.h"
+#include "cppconn/prepared_statement.h"
+
 using namespace std;
 
-int ma0in()
+
+static const char* dataBaseStr = "tcp://127.0.0.1:3306";
+static const char* dataBaseUserName = "root";
+static const char* dataBaseUserPassword = "mT+qLs$4vAyv6m9L";
+static const char* dataBaseSchema = "FileArchiver";
+
+int main()
 {
-    fileRec::connectToDatabase();
+    //Temp database connection here
+    bool invalid = true;
+    sql::Connection* dbcon = NULL;
+    sql::Driver* driver = NULL;
+    driver = get_driver_instance();
+    try {
+        dbcon = driver->connect(dataBaseStr, dataBaseUserName, dataBaseUserPassword);
+    } catch(sql::SQLException &e) {
+        e.what();
+        return 1;
+    } catch (...) {
+        std::cerr << "Error in connection to database" << std::endl;
+    }
+    dbcon->setSchema(dataBaseSchema);
+    std::cout << "Connected to database" << std::endl;
+    invalid = false;
+    
+    
+    
     fileRec myRec;
-    string filename = "/home/zhexian/image.jpg";
-    myRec.createData(filename);
-    myRec.setRefNumber(0);
-//    myRec.saveToDatabase();
+    string filename = "/home/dllyd/Desktop/CSCI222/datafile1";
+    string filename1 = "/home/dllyd/netbeans-8.0.2/uninstall.sh";
+    string comment = "This is the comment";
+    
+    myRec.createData(filename1, filename1, comment, dbcon);
+    myRec.saveToDatabase();
+    
+    versionRec temp;
+    temp.createExisting(filename1, 0, dbcon);
+    Block block;
+    block.blockNum = 0;
+    block.bytes = "something";
+    block.hash = 1;
+    block.length = BLOCK_SIZE;
+    temp.addBlock(block);
+    temp.saveBlocks();
     
     
-    fileRec* newRec = fileRec::getFile(filename);
+    vector<versionRec> versions = myRec.returnVector(filename1, dbcon);
+    cout << versions.size() << endl;
+    cout << versions[0].getHash() << endl;
+    cout << versions[0].getBlocks().size() << endl;
     
-    
-    
-    fileRec::closeDatabase();
-    //cin.get(); 
-            
     return 0;
 }
