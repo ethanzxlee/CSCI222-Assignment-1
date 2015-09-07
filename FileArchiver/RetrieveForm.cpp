@@ -18,9 +18,11 @@ RetrieveForm::RetrieveForm() {
 RetrieveForm::~RetrieveForm() {
 }
 
-void RetrieveForm::selectionFile()
+void RetrieveForm::selectionDir()
 {
-    QString pathDir = QFileDialog::getOpenFileName(this, "Open File",".","Files (*.*)");
+    QWidget *parent=0;
+    QString pathDir = QFileDialog::getExistingDirectory(parent, "Open Directory",
+             "/home",QFileDialog::ShowDirsOnly| QFileDialog::DontResolveSymlinks);
     if(!pathDir.isEmpty()){
         widget.directoryField->setText(pathDir);
     }

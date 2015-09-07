@@ -36,6 +36,7 @@ private:
     QString fileSelect;
     FileArchiver file;
     int fileVersionSelectedInTable;
+    bool saveFile;
     QWidget*parent;                             // for QMessageBox::information
 };
 

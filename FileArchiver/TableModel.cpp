@@ -1,6 +1,7 @@
 #include <qt4/Qt/qimage.h>
+#include <iostream>
 #include "TableModel.h"
-
+#include <QTableWidgetItem>
 TableModel::TableModel(QObject *parent)
 :QAbstractTableModel(parent){
     correctIcon = resizeImage("./images/correct.png");
@@ -10,9 +11,6 @@ TableModel::TableModel(QObject *parent)
 void TableModel::addTheData(std::vector<versionInfo> *data)
 {
     this->recordsCollection = data;
-    std::vector<versionInfo>::const_iterator it = recordsCollection->begin();
-    for(it;it!=recordsCollection->end();it++)
-        std::cout<<"\ninfo in addTheData: "<<(*it)->dataFile<<endl;
 }
 
 int TableModel::rowCount(const QModelIndex& /*parent*/)const
@@ -30,10 +28,10 @@ QVariant TableModel::headerData(int section, Qt::Orientation orientation, int ro
     if(role==Qt::DisplayRole){
         if(orientation == Qt::Horizontal){
             switch(section){
-                case 0: return QString("Version#");
-                case 1: return QString("Data");
-                case 2: return QString("Size");
-                case 3: return QString("Saved");
+                case 0: return QString("Saved");
+                case 1: return QString("Version#");
+                case 2: return QString("Data");
+                case 3: return QString("Size");
             }
         }
     }
@@ -42,36 +40,36 @@ QVariant TableModel::headerData(int section, Qt::Orientation orientation, int ro
 
 QVariant TableModel::data(const QModelIndex &index, int role)const{
     if(role==Qt::DisplayRole){
-        
-        if(index.column()==0)
-        {
-            char * temp;
-            sprintf(temp,"%d",recordsCollection->at(index.row())->versionNumber);
-            return QString(temp);
-        }
         if(index.column()==1)
         {
-            std::string temp = recordsCollection->at(index.row())->dataFile;
-            return QString(temp.c_str());
+            char * temp;
+            sprintf(temp,"%d",recordsCollection->at(index.row())->getVersion());
+            return QString(temp);
         }
         if(index.column()==2)
         {
-            char * temp;
-            sprintf(temp,"%d",recordsCollection->at(index.row())->sizeFile);
-            return QString(temp);
+            std::string temp = recordsCollection->at(index.row())->getData();
+            return QString(temp.c_str());
         }
         if(index.column()==3)
+        {
+            char * temp;
+            sprintf(temp,"%d",recordsCollection->at(index.row())->getSize());
+            return QString(temp);
+        }
+        if(index.column()==0)
             return QVariant();
     }
     else
     {
-        if((role==Qt::DecorationRole)&&(index.column()==3)){
+        if((role==Qt::DecorationRole)&&(index.column()==0)){
+            
             QByteArray imageBytes;
-            if(recordsCollection->at(index.row())->symbolDecision==1)
-                imageBytes= QByteArray::fromBase64(correctIcon.c_str());
+            if(recordsCollection->at(index.row())->getSymbol()==0)
+                imageBytes= QByteArray::fromBase64(wrongIcon.c_str());
             else
                 
-                imageBytes= QByteArray::fromBase64(wrongIcon.c_str());
+                imageBytes= QByteArray::fromBase64(correctIcon.c_str());
             QImage img = QImage::fromData(imageBytes);
             return img;
         }
@@ -100,11 +98,11 @@ std::string TableModel::resizeImage(std::string imgFile)
     QImage imgLoad;
     bool success = imgLoad.load(qtImg);
     if(!success){
-        std::cout<<"Image failed to load for "<<imgFile<<endl;
+        std::cout<<"Image failed to load for "<<imgFile<<std::endl;
         exit(1);
     }
     
-    QImage imgSmall = imgLoad.scaledToWidth(50, Qt::FastTransformation);
+    QImage imgSmall = imgLoad.scaledToWidth(25, Qt::FastTransformation);
     
     QByteArray qba;
     QBuffer qb(&qba);
@@ -113,4 +111,12 @@ std::string TableModel::resizeImage(std::string imgFile)
     QByteArray coded = qba.toBase64();
     std::string finalResult(coded);
     return finalResult;
+}
+
+void TableModel::resetData(std::vector<versionInfo>*newRecords)
+{
+    beginResetModel();
+    recordsCollection = newRecords;
+    endResetModel();
+    emit(dataChanged(QModelIndex(),QModelIndex()));
 }

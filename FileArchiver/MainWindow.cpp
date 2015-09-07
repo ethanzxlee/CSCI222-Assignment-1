@@ -8,7 +8,7 @@
 #include "MainWindow.h"
 #include "RetrieveForm.h"
 #include "helperFuncs.h"
-
+#include <string>
 MainWindow::MainWindow(std::vector<versionInfo>* Data) {
     data=Data;
     parent=0;
@@ -18,7 +18,7 @@ MainWindow::MainWindow(std::vector<versionInfo>* Data) {
     tableModel->addTheData(data);
     
     widget.fileView->setModel(tableModel);
-
+    widget.fileView->setSelectionBehavior(QAbstractItemView::SelectRows);
     connect(widget.selectFileButton,SIGNAL(clicked()),this, SLOT(selectFile()));
     connect(widget.SaveCurrentButton,SIGNAL(clicked()),this, SLOT(saveCurrent()));
     connect(widget.SetReferenceButton,SIGNAL(clicked()),this, SLOT(setAsReference()));
@@ -37,11 +37,12 @@ void MainWindow::selectFile()
     if(!fileSelection.isEmpty()){
         fileSelect=fileSelection;
         widget.fileField->setText(fileSelection);
+        saveFile = false;
     }
 
     if(file.exists(fileSelect.toStdString())){
         retrieveVersionDataForFile();
-        widget.warningFrame->clear();
+        widget.warningFrame->setPlainText("The older version(s) of file been stated as below");
     }
     else
         widget.warningFrame->setPlainText("The file does not been saved into the database yet");
@@ -51,18 +52,17 @@ void MainWindow::selectFile()
 void MainWindow::retrieveVersionDataForFile(){
     data->clear();
     std::vector<versionRec>temp = file.getVersionInfo(fileSelect.toStdString());
-    
     for(unsigned int a=0;a<temp.size();a++)
     {
         //Assume getVersion is return version of file
         // getSize is return size of file
         // getData is return data of file
         versionInfo ver = &temp[a];
-        ver->symbolDecision = 1;
+        //ver->symbolDecision = 1;
         data->push_back(ver);
     }
     // File have not been saved
-    if(!fileSelect.isEmpty())
+    if(!saveFile)
     {
 //        versionInfo ver;
 //        ver->versionNumber= 12;
@@ -72,10 +72,12 @@ void MainWindow::retrieveVersionDataForFile(){
 //        
 //        tableModel->addRecord(ver);
     }
-    tableModel->addTheData(data);
-    widget.fileView->setModel(tableModel);
-    widget.fileView->resizeRowsToContents();
-    std::cout<<"\nok???1111\n";
+    tableModel->resetData(data);
+    
+    widget.fileView->setColumnWidth(0,50);
+    widget.fileView->setColumnWidth(1,75);
+    widget.fileView->setColumnWidth(2,250);
+    widget.fileView->setColumnWidth(3,40);
 }
 
 void MainWindow::saveCurrent()
@@ -100,10 +102,7 @@ void MainWindow::saveCurrent()
                         QMessageBox::Ok,QMessageBox::Cancel);
                 }
                 else
-                {
-                    fileSelect.clear();
-                    widget.fileField->clear();
-                }
+                    saveFile = true;
             }
             else
             {
@@ -135,7 +134,7 @@ void MainWindow::selectionVersionEntryTableDisplay(const QModelIndex& index)
 
 void MainWindow::showComment()
 {
-    string comment = file.getComment(fileSelect.toStdString(),fileVersionSelectedInTable);
+    string comment = data->at(fileVersionSelectedInTable)->getComment();
     QMessageBox::information(parent,"Comment for selected version", 
             comment.c_str(),QMessageBox::Ok,QMessageBox::Cancel);
 }
@@ -148,13 +147,21 @@ void MainWindow::retrieveVersion()
 
     QString fileName = rf->getFilename();
     QString directoryPath = rf->getDirectoryPath();
-
-    file.retrieveVersion(fileVersionSelectedInTable, fileName.toStdString(),
-            directoryPath.toStdString());
+    directoryPath.append('/');
+    directoryPath.append(fileName);
+    file.retrieveVersion(fileSelect.toStdString(), directoryPath.toStdString(),
+            fileVersionSelectedInTable);
 }
 
 void MainWindow::setAsReference()
 {
+    if(fileVersionSelectedInTable==0)
+    {
+        std::string msg = "The file elected is initial file. The function is aborted";
+        QMessageBox::information(this,fileSelect,msg.c_str(),
+            QMessageBox::Ok,QMessageBox::Cancel);
+        return;
+    }
     QMessageBox::StandardButton reply=QMessageBox::question(parent,
             "Set reference version","Set reference version",
             QMessageBox::Ok|QMessageBox::No);
@@ -167,8 +174,23 @@ void MainWindow::setAsReference()
 
         if(ok)
         {
-            int versionNumber;
-            file.setReference(fileSelect.toStdString(), versionNumber,comment.toStdString());
+            bool success = file.setReference(fileSelect.toStdString(), 
+                    fileVersionSelectedInTable,comment.toStdString());
+            if(success)
+            {
+                char* msg;
+                sprintf(msg,"The version(s) of file before No.%d drop successful",
+                        fileVersionSelectedInTable);
+                QMessageBox::information(this,fileSelect,msg,
+                    QMessageBox::Ok,QMessageBox::Cancel);
+            }
+            else
+            {
+                
+                std::string msg = "There are error(s) occur. The function is aborted";
+                QMessageBox::critical(this,fileSelect,msg.c_str(),
+                    QMessageBox::Ok,QMessageBox::Cancel);
+            }
             retrieveVersionDataForFile();
         }
         else

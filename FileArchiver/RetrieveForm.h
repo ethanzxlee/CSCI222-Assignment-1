@@ -24,7 +24,7 @@ public:
     QString getDirectoryPath();
 
 public slots:
-    void selectionFile(); 
+    void selectionDir(); 
     void okFunc();
     void cancelFunc();
 private:

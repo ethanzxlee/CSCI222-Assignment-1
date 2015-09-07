@@ -34,7 +34,7 @@ public:
     bool removeRows(int position, int rows, const QModelIndex& index);
     bool insertRows(int position, int rows, const QModelIndex &index);
     std::string resizeImage(std::string imgFile);
-    
+    void resetData(std::vector<versionInfo>*newRecords);
 private:
     std::string correctIcon;
     std::string wrongIcon;
