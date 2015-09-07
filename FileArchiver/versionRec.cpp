@@ -77,6 +77,13 @@ void versionRec::saveToDatabase(sql::Connection *dbcon)
     pstmt->executeUpdate();
     delete pstmt;
     
+    const char* getid = "SELECT LAST_INSERT_ID()";
+    sql::ResultSet *rs = NULL;
+    pstmt = dbcon->prepareStatement(getid);
+    rs = pstmt->executeQuery();
+    rs->next();
+    idVersionRec = rs->getInt(1);
+        
     saveBlocks();
 }
 
