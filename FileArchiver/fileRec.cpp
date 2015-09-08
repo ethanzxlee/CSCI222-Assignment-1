@@ -15,12 +15,12 @@
 #include "helperFuncs.h"
 #include "versionRec.h"
 
-void fileRec::createData(const std::string& filePath, const std::string& tempPath,
-             const std::string& comment, sql::Connection *dbcon)
+void fileRec::createData(const std::string& fileP, const std::string& temporaryPath,
+             const std::string& comment, sql::Connection *dbc)
 {
-    this->filePath = filePath;
-    this->tempPath = tempPath;
-    this->dbcon = dbcon;
+    filePath = fileP;
+    tempPath = temporaryPath;
+    dbcon = dbc;
     modifyTime = getFileModifyTime(filePath);
     length = fileSize(tempPath);
     fileHash = calculateFileHash(tempPath);
@@ -31,10 +31,10 @@ void fileRec::createData(const std::string& filePath, const std::string& tempPat
     comments.push_back(comment);
 }
 
-void fileRec::createExisting(const std::string& filePath, sql::Connection *dbcon)
+void fileRec::createExisting(const std::string& file, sql::Connection *db)
 {
-    this->filePath = filePath;
-    this->dbcon = dbcon;
+    filePath = file;
+    dbcon = db;
     const char* getfilerec = "select * from filerec where filename=?";
     sql::PreparedStatement *pstmt = NULL;
     sql::ResultSet *rs = NULL;
@@ -49,7 +49,7 @@ void fileRec::createExisting(const std::string& filePath, sql::Connection *dbcon
         return;
     }
     
-    this->filePath = rs->getString(1);
+    filePath = rs->getString(1);
     fileHash = rs->getUInt64(2);
     currentHash = rs->getUInt64(3);
     refNumber = rs->getInt(4);
@@ -84,7 +84,7 @@ void fileRec::saveToDatabase()
     // There will be no blktable for the original version, because there is no changes
     versionRec original;
     original.createData(filePath, 0, length, modifyTime, fileHash, comments[0]);
-    original.saveToDatabase(this->dbcon);
+    original.saveToDatabase(dbcon);
 }
 
 void fileRec::saveBlockHashes()
@@ -94,27 +94,28 @@ void fileRec::saveBlockHashes()
     sql::PreparedStatement *pstmt = NULL;  
     pstmt = dbcon->prepareStatement(putfileblkhashes);
     for (int i = 0; i < blockHashes.size(); ++i) {
-    pstmt->setInt(1, NULL);    
-    pstmt->setString(2, filePath);
-    pstmt->setInt(3, i);
-    pstmt->setUInt64(4, blockHashes[i]);
-    pstmt->executeUpdate();
+        pstmt->setInt(1, NULL);    
+        pstmt->setString(2, filePath);
+        pstmt->setInt(3, i);
+        pstmt->setUInt64(4, blockHashes[i]);
+        pstmt->executeUpdate();
     }
     delete pstmt;
 }
 
 std::vector<versionRec> fileRec::returnVector(const std::string&filePath, sql::Connection *dbcon)
 {
-    //NOTE: if its assumed that this fileRec has its data members already filled in
-    //can remove this createExisitng call
+    return returnVector(filePath, numVersions, dbcon);
+}
+
+std::vector<versionRec> fileRec::returnVector(const std::string&filePath, int endVersion, sql::Connection *dbcon)
+{
     createExisting(filePath, dbcon);
     
     std::vector<versionRec> returnRec;
     versionRec temp;
     
-    //NOTE: Could start this at i = 1? because 0 is essentially the same as this fileRec
-    //except it has the comment as well
-    for (int i = 0; i < this->numVersions; ++i) {
+    for (int i = 0; i < endVersion; ++i) {
         temp.createExisting(filePath, i, dbcon);
         returnRec.push_back(temp);
     }
@@ -129,7 +130,6 @@ fileRec* fileRec::getFile(const std::string& filePath) throw(const char*)
 {        
     fileRec* returnFile = new fileRec;
     returnFile->createExisting(filePath, dbcon);
-   
     return returnFile;
 }
 

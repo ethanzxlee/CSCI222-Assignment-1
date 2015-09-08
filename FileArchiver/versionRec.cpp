@@ -14,35 +14,35 @@
 #include "versionRec.h"
 #include "helperFuncs.h"
 
-void versionRec::createData(const std::string& filePath, const int& versionNumber,
-                            const std::size_t& length, const long int& modifyTime, 
-                            const uint32_t& fileHash, const std::string& comment)
+void versionRec::createData(const std::string& filePath, const int& verNum,
+                            const std::size_t& len, const long int& modTime, 
+                            const uint32_t& fHash, const std::string& comm)
 {
     fileRef = filePath;
-    this->versionNumber = versionNumber;
-    this->length = length;  
-    this->modifyTime = modifyTime;
-    this->fileHash = fileHash;
-    this->comment = comment;
+    versionNumber = verNum;
+    length = len;  
+    modifyTime = modTime;
+    fileHash = fHash;
+    comment = comm;
     blocks.clear();
 }
 
 void versionRec::createExisting(const std::string& filePath, const int& version, 
-                                sql::Connection *dbcon)
+                                sql::Connection *dbc)
 {
     fileRef = filePath;
     versionNumber = version;
-    this->dbcon = dbcon;
+    dbcon = dbc;
     
     const char* getversionrec = "select * from versionrec where fileref=? AND versionnum=?";
     sql::PreparedStatement *pstmt = NULL;
     sql::ResultSet *rs = NULL;
-    pstmt = this->dbcon->prepareStatement(getversionrec);
+    pstmt = dbcon->prepareStatement(getversionrec);
     pstmt->setString(1, fileRef);
     pstmt->setInt(2, versionNumber);
    
     rs = pstmt->executeQuery();
-    
+
     bool haveFileRec = rs->next();
     if (!haveFileRec) {
         delete rs;
@@ -50,18 +50,18 @@ void versionRec::createExisting(const std::string& filePath, const int& version,
         return;
     }
     
-    this->idVersionRec = rs->getInt(1);
-    this->length = rs->getInt(4);
-    this->modifyTime = rs->getInt(5);
-    this->fileHash = rs->getUInt64(6);
-    this->comment = rs->getString(7);
+    idVersionRec = rs->getInt(1);
+    length = rs->getInt(4);
+    modifyTime = rs->getInt(5);
+    fileHash = rs->getUInt64(6);
+    comment = rs->getString(7);
     
     getExistingBlocks();
 }
 
-void versionRec::saveToDatabase(sql::Connection *dbcon)
+void versionRec::saveToDatabase(sql::Connection *dbc)
 {    
-    this->dbcon = dbcon;
+    dbcon = dbc;
     const char* putversionrec = "insert into versionrec values(?,?,?,?,?,?,?)";
    
     sql::PreparedStatement *pstmt = NULL;
@@ -102,7 +102,7 @@ void versionRec::saveBlocks()
             pstmt->setInt(4, blocks[i].blockNum);
             pstmt->setInt(5, blocks[i].hash);
             
-            std::istringstream  str(blocks[i].bytes);
+            std::istringstream str(std::string(blocks[i].bytes, blocks[i].length));
             pstmt->setBlob(6, &str);
             pstmt->executeUpdate();
         }
@@ -115,7 +115,7 @@ void versionRec::getExistingBlocks()
     const char* getblktable = "select * from blktable where version=?"; 
     sql::PreparedStatement *pstmt = NULL;
     sql::ResultSet *rs = NULL;
-    pstmt = this->dbcon->prepareStatement(getblktable);
+    pstmt = dbcon->prepareStatement(getblktable);
     pstmt->setInt(1, idVersionRec);
     rs = pstmt->executeQuery();
     
