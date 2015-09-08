@@ -24,8 +24,22 @@ public:
     QString getDirectoryPath();
 
 public slots:
+    /**
+     * Function similar to selectFile in MainWindow class
+     * but it is used for selection of directory wanted
+     */
     void selectionDir(); 
+    
+    /**
+     * Function for button "Ok"
+     * save the information filled in by user
+     */
     void okFunc();
+    
+    /**
+     * Function for button "Cancel"
+     * The information filled will be deleted
+     */
     void cancelFunc();
 private:
     QString fileName;

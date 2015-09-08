@@ -31,7 +31,6 @@ MainWindow::~MainWindow() {
 }
 void MainWindow::selectFile()
 {   
-    // if QFileDialog cant work, chg this -> parent
     QString fileSelection = QFileDialog::getOpenFileName(parent, "Open File",".",
             "Files (*.*)");
     if(!fileSelection.isEmpty()){
@@ -52,11 +51,9 @@ void MainWindow::selectFile()
 void MainWindow::retrieveVersionDataForFile(){
     data->clear();
     std::vector<versionRec>temp = file.getVersionInfo(fileSelect.toStdString());
-    for(unsigned int a=0;a<temp.size();a++)
+    unsigned int a;
+    for(a=0;a<temp.size();a++)
     {
-        //Assume getVersion is return version of file
-        // getSize is return size of file
-        // getData is return data of file
         versionInfo ver = &temp[a];
         //ver->symbolDecision = 1;
         data->push_back(ver);
@@ -65,12 +62,12 @@ void MainWindow::retrieveVersionDataForFile(){
     if(!saveFile)
     {
 //        versionInfo ver;
-//        ver->versionNumber= 12;
-//        ver->setData("hello234");
-//        ver->sizeFile = 12;
-//        ver->symbolDecision = 0;
-//        
-//        tableModel->addRecord(ver);
+//        ver->setVersionNumber(a);
+//        ver->setModifyTime(getFileModifyTime(fileSelect.toStdString()));
+//        ver->setLength(fileSize(fileSelect.toStdString()));
+//        //ver->symbolDecision = 0;
+        
+//        data->push_back(ver);
     }
     tableModel->resetData(data);
     
@@ -147,10 +144,20 @@ void MainWindow::retrieveVersion()
 
     QString fileName = rf->getFilename();
     QString directoryPath = rf->getDirectoryPath();
-    directoryPath.append('/');
-    directoryPath.append(fileName);
-    file.retrieveVersion(fileSelect.toStdString(), directoryPath.toStdString(),
-            fileVersionSelectedInTable);
+    if(!fileName.isEmpty() & !directoryPath.isEmpty())
+    {
+        directoryPath.append('/');
+        directoryPath.append(fileName);
+        file.retrieveVersion(fileSelect.toStdString(), directoryPath.toStdString(),
+                fileVersionSelectedInTable);
+    }
+    else
+    {
+        std::string msg = "There are incomplete information needed for 'Retrieve Version' button or Cancel button been clicked";
+        QMessageBox::critical(this,"Retrieve Version",msg.c_str(),
+            QMessageBox::Ok,QMessageBox::Cancel);
+    }
+        
 }
 
 void MainWindow::setAsReference()

@@ -43,18 +43,19 @@ QVariant TableModel::data(const QModelIndex &index, int role)const{
         if(index.column()==1)
         {
             char * temp;
-            sprintf(temp,"%d",recordsCollection->at(index.row())->getVersion());
+            sprintf(temp,"%d",recordsCollection->at(index.row())->getVersionNumber());
             return QString(temp);
         }
         if(index.column()==2)
         {
-            std::string temp = recordsCollection->at(index.row())->getData();
-            return QString(temp.c_str());
+            char * temp;
+            sprintf(temp,"%d",recordsCollection->at(index.row())->getModifyTime());
+            return QString(temp);
         }
         if(index.column()==3)
         {
             char * temp;
-            sprintf(temp,"%d",recordsCollection->at(index.row())->getSize());
+            sprintf(temp,"%d",recordsCollection->at(index.row())->getLength());
             return QString(temp);
         }
         if(index.column()==0)
@@ -77,14 +78,6 @@ QVariant TableModel::data(const QModelIndex &index, int role)const{
     return QVariant();
 }
     
-bool TableModel::insertRows(int /*position*/, int /*rows*/, const QModelIndex &/*index*/){
-    return true;
-}
-
-bool TableModel::removeRows(int /*position*/, int /*rows*/, const QModelIndex& /*index*/){
-    return true;
-}
-
 
 Qt::ItemFlags TableModel::flags(const QModelIndex& index) const{
     if(!index.isValid())
