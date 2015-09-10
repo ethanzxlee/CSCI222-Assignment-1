@@ -67,7 +67,7 @@ int main()
     
     FileArchiver fileArchiver;
     //fileArchiver.insertNew("/home/zhexian/v1.jpg", "This is a comment");
-    fileArchiver.update("/home/zhexian/v1.jpg", "update comment");
-    //fileArchiver.retrieveFile("/home/zhexian/v1.jpg", "/home/zhexian/finaly.jpg", 1);
+    //fileArchiver.update("/home/zhexian/v1.jpg", "update comment");
+    fileArchiver.retrieveFile("/home/zhexian/v1.jpg", "/home/zhexian/finaly.jpg", 1);
     return 0;
 }

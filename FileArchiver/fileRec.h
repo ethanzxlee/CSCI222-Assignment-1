@@ -13,14 +13,14 @@ public:
     /**
      * Fills in this fileRec with all information based on the tempPath
      * Still needs saveToDatabase to be called to commit it to database
-     * @param filePath The filepath to the original file being added
-     * @param tempPath The filepath to the temporary zipped file, this will
+     * @param fileP The filepath to the original file being added
+     * @param temporaryPath The filepath to the temporary zipped file, this will
      * be added to the database as the blob
      * @param comment This is the comment that will be associated with this version
      * of the file in the original versionrec table
      * @param dbconn A valid connection to the database
     */
-    void createData(const std::string& filePath, const std::string& tempPath,
+    void createData(const std::string& fileP, const std::string& temporaryPath,
                     const std::string& comment, sql::Connection *dbconn);
     
     /**
@@ -30,14 +30,22 @@ public:
      */
     void createExisting(const std::string& filePath, sql::Connection *dbcon);
     
+    
+    
+    
     /**
      * Gives back a vector containing all versionRecs that are associated with this 
-     * filePath.
+     * filePath up to version "endVersion".
      * @param filePath Path to the original file
+     * @param endVersion The last version to be included in the returning vector
      * @param dbconn A valid connection to the database
-     * @return 
+     * @return A vector containing all versionRecs up to endVersion
      */
-    std::vector<versionRec> returnVector(const std::string& filePath, sql::Connection *dbcon);
+    std::vector<versionRec> returnVector(const std::string& filePath, int endVersion, sql::Connection *dbcon);
+    /**
+     * As above except will use class member numVersions for the endVersion
+     */
+    std::vector<versionRec> returnVector(const std::string&filePath, sql::Connection *dbcon);
     
     /**
      * Saves whats in memory to the database, assuming that this is a new file (the original)

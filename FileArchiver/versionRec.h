@@ -14,7 +14,7 @@ public:
      * Fill out a versionRec with all data
      * Will still need to manually call addBlock to fill the blocks vector
      */
-    void createData(const std::string& filePath, const int& versionNum,
+    void createData(const std::string& filePath, const int& verNum,
                     const std::size_t& length, const long int& modifyTime, 
                     const uint32_t& fileHash,  const std::string& comment);
     
