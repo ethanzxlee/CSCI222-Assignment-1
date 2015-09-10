@@ -73,10 +73,24 @@ void versionRec::saveToDatabase(sql::Connection *dbcon)
     pstmt->setInt(5, modifyTime);
     pstmt->setUInt64(6, fileHash);
     pstmt->setString(7, comment);
-    
+   
     pstmt->executeUpdate();
     delete pstmt;
-    
+   
+    const char* getversionrec = "select * from versionrec where fileref=? AND versionnum=?";
+    sql::ResultSet *rs = NULL;
+    pstmt = this->dbcon->prepareStatement(getversionrec);
+    pstmt->setString(1, fileRef);
+    pstmt->setInt(2, versionNumber);
+    rs = pstmt->executeQuery();
+   
+    bool haveFileRec = rs->next();
+    if (!haveFileRec) {
+        delete rs;
+        delete pstmt;
+        return;
+    }
+    this->idVersionRec = rs->getInt(1);
     saveBlocks();
 }
 
@@ -94,7 +108,7 @@ void versionRec::saveBlocks()
             pstmt->setInt(3, blocks[i].length);
             pstmt->setInt(4, blocks[i].blockNum);
             pstmt->setInt(5, blocks[i].hash);
-            
+           
             std::istringstream  str(blocks[i].bytes);
             pstmt->setBlob(6, &str);
             pstmt->executeUpdate();
@@ -124,6 +138,7 @@ void versionRec::getExistingBlocks()
         block.length = rs->getInt(3);
         block.blockNum = rs->getInt(4);
         block.hash = rs->getUInt64(5);
+        block.bytes = new char[block.length];
         rs->getBlob(6)->read(block.bytes, block.length);
         blocks.push_back(block);
     } while(rs->next());

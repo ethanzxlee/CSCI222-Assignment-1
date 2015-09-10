@@ -2,6 +2,7 @@
  * Just for quickly testing fileRec and versionRec
  * I commented out main.cpp when using this
 */
+#include "FileArchiver.h"
 #include "fileRec.h"
 #include "versionRec.h"
 #include "helperFuncs.h"
@@ -22,47 +23,51 @@ static const char* dataBaseSchema = "FileArchiver";
 int main()
 {
     //Temp database connection here
-    bool invalid = true;
-    sql::Connection* dbcon = NULL;
-    sql::Driver* driver = NULL;
-    driver = get_driver_instance();
-    try {
-        dbcon = driver->connect(dataBaseStr, dataBaseUserName, dataBaseUserPassword);
-    } catch(sql::SQLException &e) {
-        e.what();
-        return 1;
-    } catch (...) {
-        std::cerr << "Error in connection to database" << std::endl;
-    }
-    dbcon->setSchema(dataBaseSchema);
-    std::cout << "Connected to database" << std::endl;
-    invalid = false;
+//    bool invalid = true;
+//    sql::Connection* dbcon = NULL;
+//    sql::Driver* driver = NULL;
+//    driver = get_driver_instance();
+//    try {
+//        dbcon = driver->connect(dataBaseStr, dataBaseUserName, dataBaseUserPassword);
+//    } catch(sql::SQLException &e) {
+//        e.what();
+//        return 1;
+//    } catch (...) {
+//        std::cerr << "Error in connection to database" << std::endl;
+//    }
+//    dbcon->setSchema(dataBaseSchema);
+//    std::cout << "Connected to database" << std::endl;
+//    invalid = false;
     
     
     
-    fileRec myRec;
-    string filename = "/home/dllyd/Desktop/CSCI222/datafile1";
-    string filename1 = "/home/dllyd/netbeans-8.0.2/uninstall.sh";
-    string comment = "This is the comment";
+//    fileRec myRec;
+//    string filename = "/home/dllyd/Desktop/CSCI222/datafile1";
+//    string filename1 = "/home/dllyd/netbeans-8.0.2/uninstall.sh";
+//    string comment = "This is the comment";
+//    
+//    myRec.createData(filename1, filename1, comment, dbcon);
+//    myRec.saveToDatabase();
+//    
+//    versionRec temp;
+//    temp.createExisting(filename1, 0, dbcon);
+//    Block block;
+//    block.blockNum = 0;
+//    block.bytes = "something";
+//    block.hash = 1;
+//    block.length = BLOCK_SIZE;
+//    temp.addBlock(block);
+//    temp.saveBlocks();
+//    
+//    
+//    vector<versionRec> versions = myRec.returnVector(filename1, dbcon);
+//    cout << versions.size() << endl;
+//    cout << versions[0].getHash() << endl;
+//    cout << versions[0].getBlocks().size() << endl;
     
-    myRec.createData(filename1, filename1, comment, dbcon);
-    myRec.saveToDatabase();
-    
-    versionRec temp;
-    temp.createExisting(filename1, 0, dbcon);
-    Block block;
-    block.blockNum = 0;
-    block.bytes = "something";
-    block.hash = 1;
-    block.length = BLOCK_SIZE;
-    temp.addBlock(block);
-    temp.saveBlocks();
-    
-    
-    vector<versionRec> versions = myRec.returnVector(filename1, dbcon);
-    cout << versions.size() << endl;
-    cout << versions[0].getHash() << endl;
-    cout << versions[0].getBlocks().size() << endl;
-    
+    FileArchiver fileArchiver;
+    //fileArchiver.insertNew("/home/zhexian/v1.jpg", "This is a comment");
+    fileArchiver.update("/home/zhexian/v1.jpg", "update comment");
+    //fileArchiver.retrieveFile("/home/zhexian/v1.jpg", "/home/zhexian/finaly.jpg", 1);
     return 0;
 }

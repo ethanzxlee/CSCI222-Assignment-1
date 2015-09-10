@@ -114,7 +114,7 @@ std::vector<versionRec> fileRec::returnVector(const std::string&filePath, sql::C
     
     //NOTE: Could start this at i = 1? because 0 is essentially the same as this fileRec
     //except it has the comment as well
-    for (int i = 0; i < this->numVersions; ++i) {
+    for (int i = 0; i <= this->numVersions; ++i) {
         temp.createExisting(filePath, i, dbcon);
         returnRec.push_back(temp);
     }

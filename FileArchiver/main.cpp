@@ -9,14 +9,7 @@
 
 #include "FileArchiver.h"
 
-int main(int argc, char *argv[]) {
-    FileArchiver fileArchiver;
-    fileArchiver.insertNew("/home/zhexian/test.jpg", "a comment");
-        //fileArchiver.differs("/home/zhexian/image.jpg");
-
+int maino(int argc, char *argv[]) {
+   
     return 0;
-//    QApplication app(argc, argv);
-//
-//    return app.exec();
-//    return 0;
 }

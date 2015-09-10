@@ -52,7 +52,7 @@ FFLAGS=
 ASFLAGS=
 
 # Link Libraries and Options
-LDLIBSOPTIONS=/usr/lib/libmysqlcppconn.so -lboost_iostreams
+LDLIBSOPTIONS=/usr/lib/libmysqlcppconn.so -lboost_iostreams -lboost_filesystem -lboost_system
 
 nbproject/qt-${CND_CONF}.mk: nbproject/qt-${CND_CONF}.pro FORCE
 	${QMAKE} VPATH=. -o qttmp-${CND_CONF}.mk nbproject/qt-${CND_CONF}.pro

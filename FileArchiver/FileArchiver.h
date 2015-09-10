@@ -37,11 +37,6 @@ public:
     FileArchiver() throw (sql::SQLException);
     
     /**
-     * Destructor
-     */
-    virtual ~FileArchiver();
-    
-    /**
      * Check if the specified file is different from the one in the database
      * @param filename The path of the file to be checked
      * @return true if different, false if same 
@@ -72,25 +67,15 @@ public:
     
     void retrieveFile(const std::string& filePath, const std::string& destinationFilePath, const int versionNum, sql::Connection* connection);
     void retrieveFile(const std::string& filePath, const std::string& destinationFilePath, const int versionNum);
-    void retrieveFile(const std::string& filePath, const std::string& destinationFilePath, sql::Connection* connection); 
-
-    void getCurrentVersionNumber(std::string filename);
-    
-    void getHashOfLastSaved(std::string filename);
-    
-    void getComment(std::string filename, int versionnum);
-    
-    void getVersionInfo(std::string filename);
     
     void setReference(std::string filename, int versionnum, std::string comment);
     
     
 private:
-    const char* DB_HOSTNAME = "tcp://127.0.0.1:3306";
-    const char* DB_USERNAME = "root";
-    const char* DB_PASSWORD = "1qaz2wsxmko0nji9";
-    const char* DB_SCHEMA = "FileArchiver";
-    
+    const char* DB_HOSTNAME;
+    const char* DB_USERNAME;
+    const char* DB_PASSWORD;
+    const char* DB_SCHEMA;
     
     /**
      * Create a connection to the MySQL database and validate the schema if specified.
@@ -98,7 +83,7 @@ private:
      * @param checkSchema true to validate the schema
      * @return A MySQL database connection
      */
-    sql::Connection* connectDB(bool checkSchema);
+    sql::Connection* connectDB(bool checkSchema = false);
     
     /**
      * Compress a file om disk

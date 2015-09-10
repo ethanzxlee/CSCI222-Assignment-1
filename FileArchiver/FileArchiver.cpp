@@ -8,12 +8,14 @@
 #include "FileArchiver.h"
 
 FileArchiver::FileArchiver() throw (sql::SQLException) {
+    DB_HOSTNAME = "tcp://127.0.0.1:3306";
+    DB_USERNAME = "root";
+    DB_PASSWORD = "1qaz2wsxmko0nji9";
+    DB_SCHEMA = "FileArchiver";
+    
     sql::Connection* connection = connectDB(true);
     connection->close();
     delete connection;
-}
-
-FileArchiver::~FileArchiver() {
 }
 
 bool FileArchiver::differs(const std::string& filePath) {
@@ -23,7 +25,7 @@ bool FileArchiver::differs(const std::string& filePath) {
     std::string tempFilePath = "/tmp/" + boost::uuids::to_string(uniqueId);
     
     if (compressFile(filePath, tempFilePath)) {
-        sql::Connection* connection = connectDB(false);
+        sql::Connection* connection = connectDB();
 
         const char* sql_selectLatestHash = "SELECT curhash FROM filerec WHERE filename = ?";
         sql::PreparedStatement* statement = connection->prepareStatement(sql_selectLatestHash);
@@ -48,7 +50,7 @@ bool FileArchiver::differs(const std::string& filePath) {
 
 bool FileArchiver::exists(const std::string& filePath) {
     bool exists = false;
-    sql::Connection* connection = connectDB(false); 
+    sql::Connection* connection = connectDB(); 
     
     const char* sql_checkFileExists = "SELECT count() FROM `filerec` WHERE filename = ?";
     sql::PreparedStatement* statement = connection->prepareStatement(sql_checkFileExists);
@@ -73,7 +75,7 @@ void FileArchiver::insertNew(const std::string& filePath, const std::string& com
     std::string tempFilePath = "/tmp/" + boost::uuids::to_string(uniqueId);
 
     if (compressFile(filePath, tempFilePath)) {  
-        sql::Connection* connection = connectDB(false);
+        sql::Connection* connection = connectDB();
         fileRec newFileRec;
         newFileRec.createData(filePath, tempFilePath, comment, connection);
         newFileRec.saveToDatabase();
@@ -84,25 +86,33 @@ void FileArchiver::insertNew(const std::string& filePath, const std::string& com
 }
 
 void FileArchiver::update(const std::string& filePath, const std::string& comment) {
-    std::string retrievedZipFilePath = "";
-    std::string retrievedUnzipFilePath = "";
+    boost::uuids::random_generator generator;
+    boost::uuids::uuid uniqueId = generator();
+    std::string retrievedFilePath = "/tmp/" + boost::uuids::to_string(uniqueId);
+    sql::Connection* connection = connectDB();
+    int currentVersion;
     
-    sql::Connection* connection = connectDB(false);
-    retrieveFile(filePath, retrievedZipFilePath, connection);
+    const char* sql_getLatestVersionNum = "SELECT currentversion FROM `filerec` WHERE filename = ?";
+    sql::PreparedStatement* statement = connection->prepareStatement(sql_getLatestVersionNum);
+    statement->setString(1, filePath);
+    sql::ResultSet* result = statement->executeQuery();
+    if (result->next()) {
+        currentVersion = result->getInt(1);
+        retrieveFile(filePath, retrievedFilePath, currentVersion, connection);
+    }
+    delete statement;
+    delete result;
     
-    decompressFile(retrievedZipFilePath, retrievedUnzipFilePath);
-    std::remove(retrievedZipFilePath.c_str());
-    
-    // TODO create a version rec here
-    // versionnum
-    // length
-    // mtsec
-    // mtnsec
-    // ovhash
-    
+    std::size_t newerLength = fileSize(filePath);
+    long newerModifyTime = getFileModifyTime(filePath);
+    uint32_t newerFileHash = calculateFileHash(filePath);
+    versionRec newerVersion;
+    newerVersion.createData(filePath, currentVersion + 1, newerLength, newerModifyTime, newerFileHash, comment);
+   
+    std::ifstream newerFile(filePath.c_str());
     std::vector<Block> differentBlocks;
     std::vector<uint32_t> fileBlockHashes = calculateFileBlockHashes(filePath);
-    std::vector<uint32_t> retrievedFileBlockHashes = calculateFileBlockHashes(retrievedUnzipFilePath);
+    std::vector<uint32_t> retrievedFileBlockHashes = calculateFileBlockHashes(retrievedFilePath);
     
     int fileHashCount = fileBlockHashes.size();
     int retrievedFileHashCount = retrievedFileBlockHashes.size();
@@ -110,55 +120,35 @@ void FileArchiver::update(const std::string& filePath, const std::string& commen
     int maxHashCount = fileHashCount > retrievedFileHashCount ? fileHashCount : retrievedFileHashCount;
 
     for (int i = 0; i < maxHashCount; i++) {
-        if (i < minHashCount) {
-            if (fileBlockHashes.at(i) != retrievedFileBlockHashes.at(i)) {
-                Block block;
-                block.blockNum = i;
-                block.hash = fileBlockHashes.at(i);
-                block.length = BLOCK_SIZE; 
-                
-                // TODO compress block and set the data;
-
-
-                differentBlocks.push_back(block);
-            }
-        }
-        else {
+        if ((i < minHashCount && fileBlockHashes.at(i) != retrievedFileBlockHashes.at(i)) || i >= minHashCount) {
+            char* blockBytes = new char[BLOCK_SIZE];
+            newerFile.seekg(BLOCK_SIZE * i);
+            newerFile.read(blockBytes, BLOCK_SIZE);
+            
             Block block;
-                block.blockNum = i;
-                block.hash = fileBlockHashes.at(i);
-                block.length = BLOCK_SIZE; 
-
-
-                differentBlocks.push_back(block);
+            block.blockNum = i;       
+            block.bytes = blockBytes;
+            block.hash = fileBlockHashes.at(i);
+            block.length = BLOCK_SIZE;
+            newerVersion.addBlock(block);
         }
     }
-    std::remove(retrievedUnzipFilePath.c_str());
+    newerVersion.saveToDatabase(connection);
+    newerFile.close();
+    std::remove(retrievedFilePath.c_str());
     connection->close();
     delete connection;
 }
 
 void FileArchiver::retrieveFile(const std::string& filePath, const std::string& destinationFilePath, const int versionNum) {
-    sql::Connection* connection = connectDB(true);
+    sql::Connection* connection = connectDB();
     retrieveFile(filePath, destinationFilePath, versionNum, connection);
     connection->close();
     delete connection;
 }
 
-void FileArchiver::retrieveFile(const std::string& filePath, const std::string& destinationFilePath, sql::Connection* connection) {
-    const char* sql_getLatestVersionNum = "SELECT currentversion FROM `filerec` WHERE filename = ?";
-    sql::PreparedStatement* statement = connection->prepareStatement(sql_getLatestVersionNum);
-    statement->setString(1, filePath);
-    sql::ResultSet* result = statement->executeQuery();
-    if (result->next()) {
-        retrieveFile(filePath, destinationFilePath, result->getInt(1), connection);
-    }
-    delete result;
-    delete statement;
-}
-
 void FileArchiver::retrieveFile(const std::string& filePath, const std::string& destinationFilePath, const int versionNum, sql::Connection* connection) {   
-    const char* selectBlob = "SELECT filedata, currentversion FROM filerec WHERE filename = ?";
+    const char* selectBlob = "SELECT filedata FROM filerec WHERE filename = ?";
     sql::PreparedStatement* statement = connection->prepareStatement(selectBlob);
     statement->setString(1, filePath);
     sql::ResultSet* result = statement->executeQuery();
@@ -167,14 +157,14 @@ void FileArchiver::retrieveFile(const std::string& filePath, const std::string& 
         boost::uuids::random_generator generator;
         boost::uuids::uuid uniqueId = generator();
         std::string tempFilePath = "/tmp/" + boost::uuids::to_string(uniqueId);
-        std::ofstream tempFile(destinationFilePath.c_str(), std::ofstream::ate);
+        std::ofstream tempFile(tempFilePath.c_str(), std::ofstream::ate);
 
         if (tempFile.is_open()) {
             std::istream* blobStream = result->getBlob(1);
             tempFile << blobStream->rdbuf();
             tempFile.close();
             
-            if (compressFile(tempFilePath, destinationFilePath)) {
+            if (decompressFile(tempFilePath, destinationFilePath)) {
                 std::remove(tempFilePath.c_str());
                 std::ofstream destinationFile(destinationFilePath.c_str(), std::ofstream::ate);
                 
@@ -182,26 +172,26 @@ void FileArchiver::retrieveFile(const std::string& filePath, const std::string& 
                 std::vector<versionRec> allVersions = existingFileRec.returnVector(filePath, connection); 
                 
                 for (std::vector<versionRec>::iterator version = allVersions.begin(); version != allVersions.end(); ++version) {
-                    std::vector<Block> allBlocks = version->getBlocks(); // TODO not sure what the function would be called
-                   
+                    std::vector<Block> allBlocks = version->getBlocks(); 
+                    
                     for (std::vector<Block>::iterator block = allBlocks.begin(); block != allBlocks.end(); ++block) {
                         int blockNum = (*block).blockNum;
                         std::string zippedBlockPath = "/tmp/zip" + blockNum;
-                        std::string unzippedBlockPath = "/tmp/unzip" + blockNum;
+                       // std::string unzippedBlockPath = "/tmp/unzip" + blockNum;
                         
                         std::ofstream zippedBlock(zippedBlockPath.c_str());
                         zippedBlock << (*block).bytes;
                         zippedBlock.close();
 
-                        if (decompressFile(zippedBlockPath.c_str(), unzippedBlockPath.c_str())) {
-                            std::ifstream unzippedBlock(unzippedBlockPath.c_str());
+                        //if (decompressFile(zippedBlockPath.c_str(), unzippedBlockPath.c_str())) {
+                            std::ifstream unzippedBlock(zippedBlockPath.c_str());
                             if (unzippedBlock.is_open()) {
-                                destinationFile.seekp(blockNum);
+                                destinationFile.seekp(blockNum * BLOCK_SIZE);
                                 destinationFile << unzippedBlock.rdbuf();
                                 unzippedBlock.close();
                             }
-                            std::remove(unzippedBlockPath.c_str());
-                        }
+                        //    std::remove(unzippedBlockPath.c_str());
+                        //}
                         std::remove(zippedBlockPath.c_str());
                     }
                 }
@@ -230,15 +220,26 @@ sql::Connection* FileArchiver::connectDB(bool checkSchema) {
 
         connection->setSchema(DB_SCHEMA);
 
-        const char* createTableFileRec = "CREATE TABLE IF NOT EXISTS `filerec` (`filename` VARCHAR(255) NOT NULL, `curhash` INT(11), `ovhash` INT(11), `currentversion` INT(11), `nversions` INT(11), `length` INT(11), `mtnsec` INT(11), `mtsec` INT(11), `tempname` VARCHAR(45), PRIMARY KEY(`filename`))";
-        statement = connection->prepareStatement(createTableFileRec);
+        const char* createTable_filerec = "CREATE TABLE IF NOT EXISTS `FileArchiver`.`filerec` (`filename` VARCHAR(255) NOT NULL, `curlhash` INT(24) UNSIGNED NOT NULL, `ovhash` INT(24) UNSIGNED NOT NULL, `currentversion` INT(11) NOT NULL, `nversion` INT(11) NOT NULL, `length` INT(11) NOT NULL, `mtsec` INT(11) NOT NULL, `filedata` MEDIUMBLOB NOT NULL, PRIMARY KEY (`filename`)) ENGINE = InnoDB;";
+        statement = connection->prepareStatement(createTable_filerec);
         statement->execute();
         delete statement;
 
-        const char* createTableBlobTable = "CREATE TABLE IF NOT EXISTS `blobtable` (`tempname` VARCHAR(45) NOT NULL, `filedata` MEDIUMBLOB);";
-        statement = connection->prepareStatement(createTableBlobTable);
+        const char* createTable_fileblkhashes = "CREATE TABLE IF NOT EXISTS `FileArchiver`.`fileblkhashes` (`idfileblkhashes` INT(24) NOT NULL AUTO_INCREMENT, `fileref` VARCHAR(255) NOT NULL, `blknum` VARCHAR(33) NOT NULL, `hashval` INT(24) UNSIGNED NOT NULL, PRIMARY KEY (`idfileblkhashes`), FOREIGN KEY (`fileref`) REFERENCES filerec(`filename`)) ENGINE = InnoDB;";
+        statement = connection->prepareStatement(createTable_fileblkhashes);
         statement->execute();
         delete statement;
+        
+        const char* createTable_versionrec = "CREATE TABLE IF NOT EXISTS `FileArchiver`.`versionrec` (`idversionrec` INT(11) NOT NULL AUTO_INCREMENT, `fileref` VARCHAR(255) NOT NULL, `versionnum` INT(11) NOT NULL, `length` INT(11) NOT NULL, `mtsec` INT(11) NOT NULL, `ovhash` INT(24) UNSIGNED NOT NULL, `commenttxt` MEDIUMTEXT NULL, PRIMARY KEY (`idversionrec`), FOREIGN KEY (`fileref`) REFERENCES filerec(`filename`)) ENGINE = InnoDB;";
+        statement = connection->prepareStatement(createTable_versionrec);
+        statement->execute();
+        delete statement;
+        
+        const char* createTable_blktable = "CREATE TABLE IF NOT EXISTS `FileArchiver`.`blktable` (`idblktable` INT(11) NOT NULL AUTO_INCREMENT, `version` INT(11) NOT NULL, `length` INT(11) NOT NULL, `blknum` INT(11) NOT NULL, `hash` INT(24) UNSIGNED NOT NULL, `data` MEDIUMBLOB NOT NULL, PRIMARY KEY (`idblktable`), FOREIGN KEY (`version`) REFERENCES versionrec(`idversionrec`)) ENGINE = InnoDB;";
+        statement = connection->prepareStatement(createTable_blktable);
+        statement->execute();
+        delete statement;
+        
     }
 
     connection->setSchema(DB_SCHEMA);
@@ -267,7 +268,11 @@ bool FileArchiver::decompressFile(const std::string& source, const std::string& 
     std::ifstream compressedFile(source.c_str(), std::ifstream::in);
     std::ofstream destinationFile(destination.c_str(), std::ofstream::out);
 
-    if (!compressedFile.is_open() || !destinationFile.good()) {
+    if (!compressedFile.is_open()) {
+        return false;
+    }
+    
+    if (!destinationFile.good()) {
         return false;
     }
 
