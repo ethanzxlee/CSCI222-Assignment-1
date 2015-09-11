@@ -6,10 +6,9 @@
  */
 
 #include <QApplication>
-
+#include <QtGui/QApplication>
 #include "FileArchiver.h"
 
-int maino(int argc, char *argv[]) {
-   
+int mainm(int argc, char *argv[]) {
     return 0;
 }

@@ -66,8 +66,8 @@ int main()
 //    cout << versions[0].getBlocks().size() << endl;
     
     FileArchiver fileArchiver;
-    //fileArchiver.insertNew("/home/zhexian/v1.jpg", "This is a comment");
-    //fileArchiver.update("/home/zhexian/v1.jpg", "update comment");
-    fileArchiver.retrieveFile("/home/zhexian/v1.jpg", "/home/zhexian/finaly.jpg", 1);
+    //fileArchiver.insertNew("/home/zhexian/Desktop/Link to Google Drive/testdata", "Comment for adding data");
+    //fileArchiver.update("/home/zhexian/Desktop/Link to Google Drive/testdata", "update comment");
+    fileArchiver.retrieveFile("/home/zhexian/Desktop/Link to Google Drive/testdata", "/home/zhexian/Desktop/Link to Google Drive/finally", 1);
     return 0;
 }

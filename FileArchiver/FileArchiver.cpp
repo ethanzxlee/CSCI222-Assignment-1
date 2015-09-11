@@ -110,17 +110,14 @@ void FileArchiver::update(const std::string& filePath, const std::string& commen
     newerVersion.createData(filePath, currentVersion + 1, newerLength, newerModifyTime, newerFileHash, comment);
    
     std::ifstream newerFile(filePath.c_str());
-    std::vector<Block> differentBlocks;
-    std::vector<uint32_t> fileBlockHashes = calculateFileBlockHashes(filePath);
+    std::vector<uint32_t> newerFileBlockHashes = calculateFileBlockHashes(filePath);
     std::vector<uint32_t> retrievedFileBlockHashes = calculateFileBlockHashes(retrievedFilePath);
     
-    int fileHashCount = fileBlockHashes.size();
+    int newerFileHashCount = newerFileBlockHashes.size();
     int retrievedFileHashCount = retrievedFileBlockHashes.size();
-    int minHashCount = fileHashCount > retrievedFileHashCount ? retrievedFileHashCount : fileHashCount;
-    int maxHashCount = fileHashCount > retrievedFileHashCount ? fileHashCount : retrievedFileHashCount;
-
-    for (int i = 0; i < maxHashCount; i++) {
-        if ((i < minHashCount && fileBlockHashes.at(i) != retrievedFileBlockHashes.at(i)) || i >= minHashCount) {
+    
+    for (int i = 0; i < newerFileHashCount; i++) {
+        if ((i < retrievedFileHashCount && newerFileBlockHashes.at(i) != retrievedFileBlockHashes.at(i)) || i >= retrievedFileHashCount) {
             char* blockBytes = new char[BLOCK_SIZE];
             newerFile.seekg(BLOCK_SIZE * i);
             newerFile.read(blockBytes, BLOCK_SIZE);
@@ -128,7 +125,7 @@ void FileArchiver::update(const std::string& filePath, const std::string& commen
             Block block;
             block.blockNum = i;       
             block.bytes = blockBytes;
-            block.hash = fileBlockHashes.at(i);
+            block.hash = newerFileBlockHashes.at(i);
             block.length = BLOCK_SIZE;
             newerVersion.addBlock(block);
         }
@@ -166,17 +163,17 @@ void FileArchiver::retrieveFile(const std::string& filePath, const std::string& 
             
             if (decompressFile(tempFilePath, destinationFilePath)) {
                 std::remove(tempFilePath.c_str());
-                std::ofstream destinationFile(destinationFilePath.c_str(), std::ofstream::ate);
+                std::ofstream destinationFile(destinationFilePath.c_str(), std::ofstream::app);
                 
                 fileRec existingFileRec;
-                std::vector<versionRec> allVersions = existingFileRec.returnVector(filePath, connection); 
+                std::vector<versionRec> allVersions = existingFileRec.returnVector(filePath, versionNum, connection); 
                 
                 for (std::vector<versionRec>::iterator version = allVersions.begin(); version != allVersions.end(); ++version) {
                     std::vector<Block> allBlocks = version->getBlocks(); 
                     
                     for (std::vector<Block>::iterator block = allBlocks.begin(); block != allBlocks.end(); ++block) {
                         int blockNum = (*block).blockNum;
-                        std::string zippedBlockPath = "/tmp/zip" + blockNum;
+                        std::string zippedBlockPath = "/tmp/zipBlock";
                        // std::string unzippedBlockPath = "/tmp/unzip" + blockNum;
                         
                         std::ofstream zippedBlock(zippedBlockPath.c_str());
