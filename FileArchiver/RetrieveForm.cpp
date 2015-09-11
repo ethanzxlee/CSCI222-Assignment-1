@@ -10,7 +10,7 @@
 RetrieveForm::RetrieveForm() {
     widget.setupUi(this);
 
-    connect(widget.selectFileButton,SIGNAL(clicked()),this, SLOT(selectionFile()));
+    connect(widget.selectFileButton,SIGNAL(clicked()),this, SLOT(selectionDir()));
     connect(widget.cancelButton,SIGNAL(clicked()),this, SLOT(cancelFunc()));
     connect(widget.okButton,SIGNAL(clicked()),this, SLOT(okFunc()));
 }
