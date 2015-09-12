@@ -109,7 +109,7 @@ void FileArchiver::update(const std::string& filePath, const std::string& commen
     versionRec newerVersion;
     newerVersion.createData(filePath, currentVersion + 1, newerLength, newerModifyTime, newerFileHash, comment);
    
-    std::ifstream newerFile(filePath.c_str());
+    std::ifstream newerFile(filePath.c_str(), std::ifstream::binary);
     std::vector<uint32_t> newerFileBlockHashes = calculateFileBlockHashes(filePath);
     std::vector<uint32_t> retrievedFileBlockHashes = calculateFileBlockHashes(retrievedFilePath);
     
@@ -117,16 +117,19 @@ void FileArchiver::update(const std::string& filePath, const std::string& commen
     int retrievedFileHashCount = retrievedFileBlockHashes.size();
     
     for (int i = 0; i < newerFileHashCount; i++) {
-        if ((i < retrievedFileHashCount && newerFileBlockHashes.at(i) != retrievedFileBlockHashes.at(i)) || i >= retrievedFileHashCount) {
-            char* blockBytes = new char[BLOCK_SIZE];
+        if ((i < retrievedFileHashCount && newerFileBlockHashes.at(i) != retrievedFileBlockHashes.at(i)) || i >= retrievedFileHashCount) {  
+            
+            std::size_t blockLength = BLOCK_SIZE * (i + 1) > newerLength ? newerLength - BLOCK_SIZE * i : BLOCK_SIZE;
+     
+            char* blockBytes = new char[blockLength];
             newerFile.seekg(BLOCK_SIZE * i);
-            newerFile.read(blockBytes, BLOCK_SIZE);
+            newerFile.read(blockBytes, blockLength);
             
             Block block;
             block.blockNum = i;       
             block.bytes = blockBytes;
             block.hash = newerFileBlockHashes.at(i);
-            block.length = BLOCK_SIZE;
+            block.length = blockLength;
             newerVersion.addBlock(block);
         }
     }
@@ -154,7 +157,7 @@ void FileArchiver::retrieveFile(const std::string& filePath, const std::string& 
         boost::uuids::random_generator generator;
         boost::uuids::uuid uniqueId = generator();
         std::string tempFilePath = "/tmp/" + boost::uuids::to_string(uniqueId);
-        std::ofstream tempFile(tempFilePath.c_str(), std::ofstream::ate);
+        std::ofstream tempFile(tempFilePath.c_str(), std::ofstream::binary);
 
         if (tempFile.is_open()) {
             std::istream* blobStream = result->getBlob(1);
@@ -163,7 +166,7 @@ void FileArchiver::retrieveFile(const std::string& filePath, const std::string& 
             
             if (decompressFile(tempFilePath, destinationFilePath)) {
                 std::remove(tempFilePath.c_str());
-                std::ofstream destinationFile(destinationFilePath.c_str(), std::ofstream::app);
+                std::fstream destinationFile(destinationFilePath.c_str(), std::ios_base::binary | std::ios_base::out | std::ios_base::in);
                 
                 fileRec existingFileRec;
                 std::vector<versionRec> allVersions = existingFileRec.returnVector(filePath, versionNum, connection); 
@@ -174,14 +177,13 @@ void FileArchiver::retrieveFile(const std::string& filePath, const std::string& 
                     for (std::vector<Block>::iterator block = allBlocks.begin(); block != allBlocks.end(); ++block) {
                         int blockNum = (*block).blockNum;
                         std::string zippedBlockPath = "/tmp/zipBlock";
-                       // std::string unzippedBlockPath = "/tmp/unzip" + blockNum;
                         
-                        std::ofstream zippedBlock(zippedBlockPath.c_str());
+                        std::ofstream zippedBlock(zippedBlockPath.c_str(), std::ofstream::binary);
                         zippedBlock << (*block).bytes;
                         zippedBlock.close();
 
                         //if (decompressFile(zippedBlockPath.c_str(), unzippedBlockPath.c_str())) {
-                            std::ifstream unzippedBlock(zippedBlockPath.c_str());
+                            std::ifstream unzippedBlock(zippedBlockPath.c_str(), std::ofstream::binary);
                             if (unzippedBlock.is_open()) {
                                 destinationFile.seekp(blockNum * BLOCK_SIZE);
                                 destinationFile << unzippedBlock.rdbuf();
@@ -244,8 +246,8 @@ sql::Connection* FileArchiver::connectDB(bool checkSchema) {
 }
 
 bool FileArchiver::compressFile(const std::string& source, const std::string& destination) {
-    std::ifstream sourceFile(source.c_str(), std::ifstream::in);
-    std::ofstream compressedFile(destination.c_str(), std::ofstream::out);
+    std::ifstream sourceFile(source.c_str(), std::ifstream::binary);
+    std::ofstream compressedFile(destination.c_str(), std::ofstream::binary);
 
     if (!sourceFile.good() || !compressedFile.is_open()) {
         return false;
@@ -262,8 +264,8 @@ bool FileArchiver::compressFile(const std::string& source, const std::string& de
 }
 
 bool FileArchiver::decompressFile(const std::string& source, const std::string& destination) {
-    std::ifstream compressedFile(source.c_str(), std::ifstream::in);
-    std::ofstream destinationFile(destination.c_str(), std::ofstream::out);
+    std::ifstream compressedFile(source.c_str(), std::ifstream::binary);
+    std::ofstream destinationFile(destination.c_str(), std::ofstream::binary);
 
     if (!compressedFile.is_open()) {
         return false;
