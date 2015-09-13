@@ -12,7 +12,7 @@
 #include <fstream>
 #include <stdio.h>
 #include <vector>
-
+#include <QByteArray>
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/copy.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
@@ -64,9 +64,9 @@ public:
      */
     void update(const std::string& filePath, const std::string& comment);
 
-    
-    void retrieveFile(const std::string& filePath, const std::string& destinationFilePath, const int versionNum, sql::Connection* connection);
     void retrieveFile(const std::string& filePath, const std::string& destinationFilePath, const int versionNum);
+
+    void retrieveFile(const std::string& filePath, const std::string& destinationFilePath, const int versionNum, sql::Connection* connection);
     
     void setReference(std::string filename, int versionnum, std::string comment);
     
