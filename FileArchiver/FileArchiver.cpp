@@ -125,9 +125,9 @@ void FileArchiver::update(const std::string& filePath, const std::string& commen
             newerFile.read(blockBytes, blockLength);
 
             // Compressing a block   
-            QByteArray qBlockBytes(blockBytes);
+            QByteArray qBlockBytes(blockBytes, blockLength);
             QByteArray qBlockBytesCompressed = qCompress(qBlockBytes);
-
+   
             Block block;
             block.blockNum = i;
             block.bytes = new char[qBlockBytesCompressed.size()];
@@ -162,24 +162,40 @@ void FileArchiver::retrieveFile(const std::string& filePath, const std::string& 
     if (result->next()) {
         boost::uuids::random_generator generator;
         boost::uuids::uuid uniqueId = generator();
-        std::string tempFilePath = "/tmp/" + boost::uuids::to_string(uniqueId);
-        std::ofstream tempFile(tempFilePath.c_str(), std::ofstream::binary);
+        std::string tempFileZipPath = "/tmp/" + boost::uuids::to_string(uniqueId);
+        std::ofstream tempFileZip(tempFileZipPath.c_str(), std::ofstream::binary);
 
-        if (tempFile.is_open()) {
+        if (tempFileZip.is_open()) {
             std::istream* blobStream = result->getBlob(1);
-            tempFile << blobStream->rdbuf();
-            tempFile.close();
-
-            if (decompressFile(tempFilePath, destinationFilePath)) {
-                std::remove(tempFilePath.c_str());
-                std::fstream destinationFile(destinationFilePath.c_str(), std::ios_base::binary | std::ios_base::out | std::ios_base::in);
-
+            tempFileZip << blobStream->rdbuf();
+            tempFileZip.close();
+            
+            std::string tempFilePath = "/tmp/" + boost::uuids::to_string(generator());
+            std::string modifiedFilePath;
+            
+            if (decompressFile(tempFileZipPath, tempFilePath)) {
+                    std::remove(tempFileZipPath.c_str());
                 fileRec existingFileRec;
                 std::vector<versionRec> allVersions = existingFileRec.returnVector(filePath, versionNum, connection);
 
                 for (std::vector<versionRec>::iterator version = allVersions.begin(); version != allVersions.end(); ++version) {
+                    modifiedFilePath = "/tmp/" + boost::uuids::to_string(generator());   
+                    std::size_t tempFileSize = fileSize(tempFilePath.c_str());
+                    std::fstream tempFile(tempFilePath.c_str(), std::ios_base::binary | std::ios_base::in);
+                    std::fstream modifiedFile(modifiedFilePath.c_str(), std::ios_base::binary | std::ios_base::out);
+                    
                     std::vector<Block> allBlocks = version->getBlocks();
+                    
+                    // Original blocks
+                    for (std::size_t i = 0; i < version->getLength() && i < tempFileSize; i += BLOCK_SIZE) {
+                        int readSize = version->getLength() - i < BLOCK_SIZE ? version->getLength() - i : BLOCK_SIZE;
+                        char* tempBlock = new char[readSize];
+                        tempFile.read(tempBlock, readSize);
+                        modifiedFile.write(tempBlock, readSize);
+                        delete tempBlock;
+                    }
 
+                    // Changed blocks
                     for (std::vector<Block>::iterator block = allBlocks.begin(); block != allBlocks.end(); ++block) {
                         int blockNum = (*block).blockNum;
 
@@ -187,13 +203,26 @@ void FileArchiver::retrieveFile(const std::string& filePath, const std::string& 
                         QByteArray qBlockBytesCompressed((*block).bytes, (*block).length);
                         QByteArray qBlockBytes = qUncompress(qBlockBytesCompressed);
                         
-                        destinationFile.seekp(blockNum * BLOCK_SIZE);
-                        destinationFile.write(qBlockBytes.data(), qBlockBytes.size());
+                        modifiedFile.seekp(blockNum * BLOCK_SIZE);
+                        modifiedFile.write(qBlockBytes.data(), qBlockBytes.size());
                     }
+                    
+                    tempFile.close();
+                    modifiedFile.close();
+                    std::remove(tempFilePath.c_str());
+                    tempFilePath = modifiedFilePath;
                 }
+                
+                std::fstream finalFile(modifiedFilePath.c_str(), std::ios_base::binary | std::ios_base::in);
+                std::fstream destinationFile(destinationFilePath.c_str(), std::ios_base::binary | std::ios_base::out);
+                
+                destinationFile << finalFile.rdbuf();
+                finalFile.close();
                 destinationFile.close();
-            } else {
-                std::remove(tempFilePath.c_str());
+                std::remove(modifiedFilePath.c_str());
+            } 
+            else {
+                std::remove(tempFileZipPath.c_str());
             }
         }
     }
