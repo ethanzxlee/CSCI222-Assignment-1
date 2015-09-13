@@ -13,7 +13,8 @@
 #include <QtGui>
 #include <vector>
 #include "versionRec.h"
-typedef versionRec* versionInfo;
+#include <sstream>
+
 class TableModel:public QAbstractTableModel
 {
 public:
@@ -23,7 +24,7 @@ public:
      * To add the data to recordsCollection(variable in this class) at intial
      * @param data in vector form of versionInfo
      */
-    void addTheData(std::vector<versionInfo> *data);
+    void addTheData(std::vector<versionRec> *data);
     
     /**
      * Get the number of row(s) needed for table display in GUI
@@ -69,17 +70,17 @@ public:
      * @param imgFile
      * @return string of information of img
      */
-    std::string resizeImage(std::string imgFile);
+    std::string convertImage(std::string imgFile);
     
     /**
      * Reset the whole table for display in GUI
      * @param newRecords
      */
-    void resetData(std::vector<versionInfo>*newRecords);
+    void resetData(std::vector<versionRec>*newRecords);
 private:
     std::string correctIcon;
     std::string wrongIcon;
-    std::vector<versionInfo>*recordsCollection;
+    std::vector<versionRec>*recordsCollection;
     TableModel& operator=(const TableModel&);
     TableModel(const TableModel& orig);
     

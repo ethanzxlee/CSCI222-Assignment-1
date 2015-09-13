@@ -1,22 +1,20 @@
 /*
  * File:   main.cpp
- * Author: zhexian
+ * Author: parallels
  *
- * Created on 29 August 2015, 12:44 AM
+ * Created on August 31, 2015, 10:13 PM
  */
 
-#include <QApplication>
-
-#include "FileArchiver.h"
-
+#include <QtGui/QApplication>
+#include "MainWindow.h"
 int main(int argc, char *argv[]) {
-    FileArchiver fileArchiver;
-    fileArchiver.insertNew("/home/zhexian/test.jpg", "a comment");
-        //fileArchiver.differs("/home/zhexian/image.jpg");
+    // initialize resources, if needed
+    // Q_INIT_RESOURCE(resfile);
 
-    return 0;
-//    QApplication app(argc, argv);
-//
-//    return app.exec();
-//    return 0;
+    QApplication app(argc, argv);
+    // create and show your widgets here
+    std::vector<versionRec> data;
+    MainWindow win(&data);
+    win.show();
+    return app.exec();
 }

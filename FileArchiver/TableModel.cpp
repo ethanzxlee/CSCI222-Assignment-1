@@ -4,11 +4,11 @@
 #include <QTableWidgetItem>
 TableModel::TableModel(QObject *parent)
 :QAbstractTableModel(parent){
-    correctIcon = resizeImage("./images/correct.png");
-    wrongIcon = resizeImage("./images/wrong.png");
+    correctIcon = convertImage("./images/saved.jpg");
+    wrongIcon = convertImage("./images/unsaved.jpg");
 }
 
-void TableModel::addTheData(std::vector<versionInfo> *data)
+void TableModel::addTheData(std::vector<versionRec> *data)
 {
     this->recordsCollection = data;
 }
@@ -42,21 +42,28 @@ QVariant TableModel::data(const QModelIndex &index, int role)const{
     if(role==Qt::DisplayRole){
         if(index.column()==1)
         {
-            char * temp;
-            sprintf(temp,"%d",recordsCollection->at(index.row())->getVersionNumber());
-            return QString(temp);
+            std::string temp;
+            std::ostringstream converter;
+            converter<<recordsCollection->at(index.row()).getVersionNumber();
+            temp = converter.str();
+            return QString(temp.c_str());
         }
         if(index.column()==2)
         {
-            char * temp;
-            sprintf(temp,"%d",recordsCollection->at(index.row())->getModifyTime());
-            return QString(temp);
+            std::string temp;
+            std::ostringstream converter;
+            converter<<recordsCollection->at(index.row()).getModifyTime();
+            temp = converter.str();
+            return QString(temp.c_str());
         }
         if(index.column()==3)
         {
-            char * temp;
-            sprintf(temp,"%d",recordsCollection->at(index.row())->getLength());
-            return QString(temp);
+            
+            std::string temp;
+            std::ostringstream converter;
+            converter<<recordsCollection->at(index.row()).getLength();
+            temp = converter.str();
+            return QString(temp.c_str());
         }
         if(index.column()==0)
             return QVariant();
@@ -64,9 +71,8 @@ QVariant TableModel::data(const QModelIndex &index, int role)const{
     else
     {
         if((role==Qt::DecorationRole)&&(index.column()==0)){
-            
             QByteArray imageBytes;
-            if(recordsCollection->at(index.row())->getSymbol()==0)
+            if(recordsCollection->at(index.row()).getSymbol()==0)
                 imageBytes= QByteArray::fromBase64(wrongIcon.c_str());
             else
                 
@@ -85,7 +91,7 @@ Qt::ItemFlags TableModel::flags(const QModelIndex& index) const{
     return QAbstractTableModel::flags(index)|Qt::ItemIsSelectable;
 }
 
-std::string TableModel::resizeImage(std::string imgFile)
+std::string TableModel::convertImage(std::string imgFile)
 {
     QString qtImg(imgFile.c_str());
     QImage imgLoad;
@@ -94,19 +100,17 @@ std::string TableModel::resizeImage(std::string imgFile)
         std::cout<<"Image failed to load for "<<imgFile<<std::endl;
         exit(1);
     }
-    
-    QImage imgSmall = imgLoad.scaledToWidth(25, Qt::FastTransformation);
-    
+        
     QByteArray qba;
     QBuffer qb(&qba);
-    imgSmall.save(&qb,"PNG");
+    imgLoad.save(&qb,"JPG");
     
     QByteArray coded = qba.toBase64();
     std::string finalResult(coded);
     return finalResult;
 }
 
-void TableModel::resetData(std::vector<versionInfo>*newRecords)
+void TableModel::resetData(std::vector<versionRec>*newRecords)
 {
     beginResetModel();
     recordsCollection = newRecords;
