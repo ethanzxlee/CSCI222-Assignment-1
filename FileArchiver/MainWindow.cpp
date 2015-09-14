@@ -108,7 +108,6 @@ void MainWindow::saveCurrent()
         else
         {
             file.insertNew(fileSelect.toStdString(), comment.toStdString());
-            fileSelect.clear();
             widget.fileField->clear();
             saveFile = true;
         }
