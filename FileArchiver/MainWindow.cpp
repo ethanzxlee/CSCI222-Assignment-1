@@ -40,14 +40,13 @@ void MainWindow::selectFile()
         widget.fileField->setText(fileSelection);
         saveFile = false;
         fileVersionSelectedInTable=-1;
+        if(file.exists(fileSelect.toStdString())){
+            retrieveVersionDataForFile();
+            widget.warningFrame->setPlainText("The older version(s) of file been stated as below");
+        }
+        else
+            widget.warningFrame->setPlainText("The file does not been saved into the database yet");
     }
-
-    if(file.exists(fileSelect.toStdString())){
-        retrieveVersionDataForFile();
-        widget.warningFrame->setPlainText("The older version(s) of file been stated as below");
-    }
-    else
-        widget.warningFrame->setPlainText("The file does not been saved into the database yet");
 }
 
 void MainWindow::retrieveVersionDataForFile(){
