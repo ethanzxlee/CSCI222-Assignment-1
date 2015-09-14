@@ -52,7 +52,7 @@ public:
         fileNameField->setGeometry(QRect(100, 80, 171, 27));
         selectFileButton = new QPushButton(RetrieveForm);
         selectFileButton->setObjectName(QString::fromUtf8("selectFileButton"));
-        selectFileButton->setGeometry(QRect(440, 30, 98, 27));
+        selectFileButton->setGeometry(QRect(440, 30, 111, 27));
         okButton = new QPushButton(RetrieveForm);
         okButton->setObjectName(QString::fromUtf8("okButton"));
         okButton->setGeometry(QRect(460, 230, 98, 27));
@@ -70,7 +70,7 @@ public:
         RetrieveForm->setWindowTitle(QApplication::translate("RetrieveForm", "RetrieveForm", 0, QApplication::UnicodeUTF8));
         label->setText(QApplication::translate("RetrieveForm", "Directory", 0, QApplication::UnicodeUTF8));
         label_2->setText(QApplication::translate("RetrieveForm", "Filename", 0, QApplication::UnicodeUTF8));
-        selectFileButton->setText(QApplication::translate("RetrieveForm", "Select File", 0, QApplication::UnicodeUTF8));
+        selectFileButton->setText(QApplication::translate("RetrieveForm", "Select Directory", 0, QApplication::UnicodeUTF8));
         okButton->setText(QApplication::translate("RetrieveForm", "OK", 0, QApplication::UnicodeUTF8));
         cancelButton->setText(QApplication::translate("RetrieveForm", "Cancel", 0, QApplication::UnicodeUTF8));
     } // retranslateUi

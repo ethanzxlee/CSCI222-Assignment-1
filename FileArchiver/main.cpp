@@ -1,14 +1,20 @@
 /*
  * File:   main.cpp
- * Author: zhexian
+ * Author: parallels
  *
- * Created on 29 August 2015, 12:44 AM
+ * Created on August 31, 2015, 10:13 PM
  */
 
-#include <QApplication>
 #include <QtGui/QApplication>
-#include "FileArchiver.h"
+#include "MainWindow.h"
+int main(int argc, char *argv[]) {
+    // initialize resources, if needed
+    // Q_INIT_RESOURCE(resfile);
 
-int mainm(int argc, char *argv[]) {
-    return 0;
+    QApplication app(argc, argv);
+    // create and show your widgets here
+    std::vector<versionRec> data;
+    MainWindow win(&data);
+    win.show();
+    return app.exec();
 }

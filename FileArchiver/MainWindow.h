@@ -16,7 +16,7 @@
 class MainWindow : public QMainWindow {
     Q_OBJECT
 public:
-    MainWindow(std::vector<versionInfo>* Data);
+    MainWindow(std::vector<versionRec>* Data);
     virtual ~MainWindow();
     
 public slots:
@@ -79,7 +79,7 @@ private:
     /**
      * Keep the data from getVersionInfo(FileArchiver)
      */
-    std::vector<versionInfo>* data;
+    std::vector<versionRec>* data;
     
     /**
      * Table Model for setting display in GUI
@@ -103,6 +103,11 @@ private:
     int fileVersionSelectedInTable;
     
     /**
+     * Keep total number of file can be selected to set as reference
+     */
+    int totalEnableForSelection;
+    
+    /**
      * To detect the fileSelect has been saved or not for display purpose
      */
     bool saveFile;
@@ -110,7 +115,7 @@ private:
     /**
      * One of the parameter need in QMessageBox::information, and so on
      */
-    QWidget*parent;                            
+    QWidget*parent;  
 };
 
 #endif	/* _MAINWINDOW_H */

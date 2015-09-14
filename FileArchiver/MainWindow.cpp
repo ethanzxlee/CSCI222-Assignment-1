@@ -7,11 +7,11 @@
 
 #include "MainWindow.h"
 #include "RetrieveForm.h"
-#include "helperFuncs.h"
 #include <string>
-MainWindow::MainWindow(std::vector<versionInfo>* Data) {
+MainWindow::MainWindow(std::vector<versionRec>* Data) {
     data=Data;
     parent=0;
+    fileVersionSelectedInTable=-1;
     widget.setupUi(this);
     
     tableModel = new TableModel(0);
@@ -24,6 +24,8 @@ MainWindow::MainWindow(std::vector<versionInfo>* Data) {
     connect(widget.SetReferenceButton,SIGNAL(clicked()),this, SLOT(setAsReference()));
     connect(widget.RetrieveVersionButton,SIGNAL(clicked()),this, SLOT(retrieveVersion()));
     connect(widget.ShowCommentButton,SIGNAL(clicked()),this, SLOT(showComment()));
+    connect(widget.fileView, SIGNAL(clicked(const QModelIndex&)),this,
+            SLOT(selectionVersionEntryTableDisplay(const QModelIndex&)));
 }
 
 MainWindow::~MainWindow() {
@@ -37,6 +39,7 @@ void MainWindow::selectFile()
         fileSelect=fileSelection;
         widget.fileField->setText(fileSelection);
         saveFile = false;
+        fileVersionSelectedInTable=-1;
     }
 
     if(file.exists(fileSelect.toStdString())){
@@ -45,36 +48,28 @@ void MainWindow::selectFile()
     }
     else
         widget.warningFrame->setPlainText("The file does not been saved into the database yet");
-    
 }
 
 void MainWindow::retrieveVersionDataForFile(){
     data->clear();
-    std::vector<versionRec>temp = file.getVersionInfo(fileSelect.toStdString());
-    unsigned int a;
-    for(a=0;a<temp.size();a++)
-    {
-        versionInfo ver = &temp[a];
-        //ver->symbolDecision = 1;
-        data->push_back(ver);
-    }
+    std::vector<versionRec>temp = file.getVersionInfo(fileSelect.toStdString());  
+    totalEnableForSelection = temp.size();
+    for (unsigned int a=0; a<temp.size();a++)
+        data->push_back(temp[a]);
+    
     // File have not been saved
     if(!saveFile)
     {
-//        versionInfo ver;
-//        ver->setVersionNumber(a);
-//        ver->setModifyTime(getFileModifyTime(fileSelect.toStdString()));
-//        ver->setLength(fileSize(fileSelect.toStdString()));
-//        //ver->symbolDecision = 0;
+        versionRec ver;
+        ver.setVersionNumber(999);
+        ver.setModifyTime(99999);
+        ver.setLength(9999);
+        ver.setSymbol(0);
         
-//        data->push_back(ver);
+        data->push_back(ver);
     }
     tableModel->resetData(data);
-    
-    widget.fileView->setColumnWidth(0,50);
-    widget.fileView->setColumnWidth(1,75);
-    widget.fileView->setColumnWidth(2,250);
-    widget.fileView->setColumnWidth(3,40);
+    widget.fileView->resizeColumnsToContents();
 }
 
 void MainWindow::saveCurrent()
@@ -131,9 +126,19 @@ void MainWindow::selectionVersionEntryTableDisplay(const QModelIndex& index)
 
 void MainWindow::showComment()
 {
-    string comment = data->at(fileVersionSelectedInTable)->getComment();
-    QMessageBox::information(parent,"Comment for selected version", 
-            comment.c_str(),QMessageBox::Ok,QMessageBox::Cancel);
+    if(fileVersionSelectedInTable==-1)
+    {
+        string comment = "No file been selected to display the comment";
+        QMessageBox::critical(parent,"Error", 
+        comment.c_str(),QMessageBox::Ok,QMessageBox::Cancel);
+    }
+    else
+    {
+        string comment = data->at(fileVersionSelectedInTable).getComment();
+        QMessageBox::information(parent,"Comment for selected version", 
+        comment.c_str(),QMessageBox::Ok,QMessageBox::Cancel);
+    }
+
 }
 
 void MainWindow::retrieveVersion()
@@ -164,8 +169,22 @@ void MainWindow::setAsReference()
 {
     if(fileVersionSelectedInTable==0)
     {
-        std::string msg = "The file elected is initial file. The function is aborted";
-        QMessageBox::information(this,fileSelect,msg.c_str(),
+        std::string msg = "The file selected is initial file. The function is aborted";
+        QMessageBox::critical(this,fileSelect,msg.c_str(),
+            QMessageBox::Ok,QMessageBox::Cancel);
+        return;
+    }
+    if(fileVersionSelectedInTable==-1)
+    {
+        std::string msg = "No file be selected to set as reference";
+        QMessageBox::critical(this,fileSelect,msg.c_str(),
+            QMessageBox::Ok,QMessageBox::Cancel);
+        return;
+    }
+    if(fileVersionSelectedInTable>=totalEnableForSelection)
+    {
+        std::string msg = "The file have not been save. Thus, it cannot set as reference";
+        QMessageBox::critical(this,fileSelect,msg.c_str(),
             QMessageBox::Ok,QMessageBox::Cancel);
         return;
     }
@@ -185,10 +204,13 @@ void MainWindow::setAsReference()
                     fileVersionSelectedInTable,comment.toStdString());
             if(success)
             {
-                char* msg;
-                sprintf(msg,"The version(s) of file before No.%d drop successful",
-                        fileVersionSelectedInTable);
-                QMessageBox::information(this,fileSelect,msg,
+                std::string msg;
+                std::ostringstream converter;
+                converter<<fileVersionSelectedInTable;
+                msg = "The version(s) of file before No. ";
+                msg.append(converter.str());
+                msg.append(" drop successfully");
+                QMessageBox::information(this,fileSelect,msg.c_str(),
                     QMessageBox::Ok,QMessageBox::Cancel);
             }
             else
