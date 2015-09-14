@@ -52,7 +52,7 @@ bool FileArchiver::exists(const std::string& filePath) {
     bool exists = false;
     sql::Connection* connection = connectDB();
 
-    const char* sql_checkFileExists = "SELECT count() FROM `filerec` WHERE filename = ?";
+    const char* sql_checkFileExists = "SELECT count(*) FROM `filerec` WHERE filename = ?";
     sql::PreparedStatement* statement = connection->prepareStatement(sql_checkFileExists);
     statement->setString(1, filePath);
 
@@ -271,7 +271,7 @@ sql::Connection* FileArchiver::connectDB(bool checkSchema) {
 
         connection->setSchema(DB_SCHEMA);
 
-        const char* createTable_filerec = "CREATE TABLE IF NOT EXISTS `FileArchiver`.`filerec` (`filename` VARCHAR(255) NOT NULL, `curlhash` INT(24) UNSIGNED NOT NULL, `ovhash` INT(24) UNSIGNED NOT NULL, `currentversion` INT(11) NOT NULL, `nversion` INT(11) NOT NULL, `length` INT(11) NOT NULL, `mtsec` INT(11) NOT NULL, `filedata` MEDIUMBLOB NOT NULL, PRIMARY KEY (`filename`)) ENGINE = InnoDB;";
+        const char* createTable_filerec = "CREATE TABLE IF NOT EXISTS `FileArchiver`.`filerec` (`filename` VARCHAR(255) NOT NULL, `curlhash` INT(24) UNSIGNED NOT NULL, `ovhash` INT(24) UNSIGNED NOT NULL, `currentversion` INT(11) NOT NULL, `nversion` INT(11) NOT NULL, `length` INT(11) NOT NULL, `mtsec` INT(11) NOT NULL, `filedata` LONGBLOB NOT NULL, PRIMARY KEY (`filename`)) ENGINE = InnoDB;";
         statement = connection->prepareStatement(createTable_filerec);
         statement->execute();
         delete statement;

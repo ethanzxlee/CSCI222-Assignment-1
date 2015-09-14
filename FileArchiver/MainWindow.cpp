@@ -34,7 +34,7 @@ MainWindow::~MainWindow() {
 void MainWindow::selectFile()
 {   
     QString fileSelection = QFileDialog::getOpenFileName(parent, "Open File",".",
-            "Files (*.*)");
+            "Files (*)");
     if(!fileSelection.isEmpty()){
         fileSelect=fileSelection;
         widget.fileField->setText(fileSelection);
@@ -128,13 +128,13 @@ void MainWindow::showComment()
 {
     if(fileVersionSelectedInTable==-1)
     {
-        string comment = "No file been selected to display the comment";
+        std::string comment = "No file been selected to display the comment";
         QMessageBox::critical(parent,"Error", 
         comment.c_str(),QMessageBox::Ok,QMessageBox::Cancel);
     }
     else
     {
-        string comment = data->at(fileVersionSelectedInTable).getComment();
+        std::string comment = data->at(fileVersionSelectedInTable).getComment();
         QMessageBox::information(parent,"Comment for selected version", 
         comment.c_str(),QMessageBox::Ok,QMessageBox::Cancel);
     }
@@ -153,7 +153,7 @@ void MainWindow::retrieveVersion()
     {
         directoryPath.append('/');
         directoryPath.append(fileName);
-        file.retrieveVersion(fileSelect.toStdString(), directoryPath.toStdString(),
+        file.retrieveFile(fileSelect.toStdString(), directoryPath.toStdString(),
                 fileVersionSelectedInTable);
     }
     else

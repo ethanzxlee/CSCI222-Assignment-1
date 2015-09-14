@@ -20,7 +20,7 @@ static const char* dataBaseUserName = "root";
 static const char* dataBaseUserPassword = "mT+qLs$4vAyv6m9L";
 static const char* dataBaseSchema = "FileArchiver";
 
-int main()
+int mainn()
 {
     //Temp database connection here
 //    bool invalid = true;
