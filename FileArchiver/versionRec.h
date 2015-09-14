@@ -31,7 +31,7 @@ public:
      * member variables are filled, including the blocks vector
      * @param dbcon A valid connection to the mysql database
      */
-    void saveToDatabase(sql::Connection *dbcon);
+    void saveToDatabase(sql::Connection *dbcon, bool isUpdate = false);
     
     /**
      * @param b A Block with proper information of the block filled in

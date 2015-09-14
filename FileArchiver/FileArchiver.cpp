@@ -22,28 +22,24 @@ bool FileArchiver::differs(const std::string& filePath) {
     bool differs = true;
     boost::uuids::random_generator generator;
     boost::uuids::uuid uniqueId = generator();
-    std::string tempFilePath = "/tmp/" + boost::uuids::to_string(uniqueId);
+    sql::Connection* connection = connectDB();
 
-    if (compressFile(filePath, tempFilePath)) {
-        sql::Connection* connection = connectDB();
+    const char* sql_selectLatestHash = "SELECT curhash FROM filerec WHERE filename = ?";
+    sql::PreparedStatement* statement = connection->prepareStatement(sql_selectLatestHash);
+    statement->setString(1, filePath);
+    sql::ResultSet* result = statement->executeQuery();
 
-        const char* sql_selectLatestHash = "SELECT curhash FROM filerec WHERE filename = ?";
-        sql::PreparedStatement* statement = connection->prepareStatement(sql_selectLatestHash);
-        statement->setString(1, filePath);
-        sql::ResultSet* result = statement->executeQuery();
-
-        if (result->next()) {
-            uint32_t dbHash = result->getInt(1);
-            uint32_t localHash = calculateFileHash(tempFilePath);
-            differs = dbHash != localHash;
-        }
-
-        connection->close();
-        delete connection;
-        delete statement;
-        delete result;
-        std::remove(tempFilePath.c_str());
+    if (result->next()) {
+        uint32_t dbHash = result->getInt(1);
+        uint32_t localHash = calculateFileHash(filePath);
+        differs = dbHash != localHash;
     }
+
+    connection->close();
+    delete connection;
+    delete statement;
+    delete result;
+
 
     return differs;
 }
@@ -92,7 +88,7 @@ bool FileArchiver::update(const std::string& filePath, const std::string& commen
     sql::Connection* connection = connectDB();
     int currentVersion;
 
-    const char* sql_getLatestVersionNum = "SELECT currentversion FROM `filerec` WHERE filename = ?";
+    const char* sql_getLatestVersionNum = "SELECT nversion + currentversion - 1 FROM `filerec` WHERE filename = ?";
     sql::PreparedStatement* statement = connection->prepareStatement(sql_getLatestVersionNum);
     statement->setString(1, filePath);
     sql::ResultSet* result = statement->executeQuery();
@@ -139,7 +135,7 @@ bool FileArchiver::update(const std::string& filePath, const std::string& commen
             delete blockBytes;
         }
     }
-    newerVersion.saveToDatabase(connection);
+    newerVersion.saveToDatabase(connection, true);
     newerFile.close();
     std::remove(retrievedFilePath.c_str());
     connection->close();
@@ -221,8 +217,7 @@ void FileArchiver::retrieveFile(const std::string& filePath, const std::string& 
                 finalFile.close();
                 destinationFile.close();
                 std::remove(modifiedFilePath.c_str());
-            }
-            else {
+            } else {
                 std::remove(tempFileZipPath.c_str());
             }
         }
@@ -238,8 +233,8 @@ bool FileArchiver::setReference(std::string filename, int versionnum, std::strin
 std::vector<versionRec> FileArchiver::getVersionInfo(const std::string& filePath) {
     sql::Connection* connection = connectDB();
     std::vector<versionRec> allVersions;
-    
-    const char* sql_getLatestVersionNum = "SELECT currentversion FROM `filerec` WHERE filename = ?";
+
+    const char* sql_getLatestVersionNum = "SELECT nversion + currentversion - 1 FROM `filerec` WHERE filename = ?";
     sql::PreparedStatement* statement = connection->prepareStatement(sql_getLatestVersionNum);
     statement->setString(1, filePath);
     sql::ResultSet* result = statement->executeQuery();
@@ -250,10 +245,10 @@ std::vector<versionRec> FileArchiver::getVersionInfo(const std::string& filePath
     }
     delete statement;
     delete result;
-    
+
     connection->close();
     delete connection;
-    
+
     return allVersions;
 }
 

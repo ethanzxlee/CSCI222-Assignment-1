@@ -22,10 +22,10 @@ void fileRec::createData(const std::string& fileP, const std::string& temporaryP
     tempPath = temporaryPath;
     dbcon = dbc;
     modifyTime = getFileModifyTime(filePath);
-    length = fileSize(tempPath);
-    fileHash = calculateFileHash(tempPath);
+    length = fileSize(filePath);
+    fileHash = calculateFileHash(filePath);
     currentHash = fileHash;
-    blockHashes = calculateFileBlockHashes(tempPath);
+    blockHashes = calculateFileBlockHashes(filePath);
     numVersions = 1;
     refNumber = 0;
     comments.push_back(comment);

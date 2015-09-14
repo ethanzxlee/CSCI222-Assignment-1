@@ -59,12 +59,21 @@ void versionRec::createExisting(const std::string& filePath, const int& version,
     getExistingBlocks();
 }
 
-void versionRec::saveToDatabase(sql::Connection *dbc)
+void versionRec::saveToDatabase(sql::Connection *dbc, bool isUpdate)
 {    
     dbcon = dbc;
-    const char* putversionrec = "insert into versionrec values(?,?,?,?,?,?,?)";
-   
+
     sql::PreparedStatement *pstmt = NULL;
+    if (isUpdate) {
+        const char* updatefilerec = "update filerec set nversion = nversion + 1, curhash = ? where filename = ?";
+        pstmt = dbcon->prepareStatement(updatefilerec);
+        pstmt->setUInt64(1, fileHash);
+        pstmt->setString(2, fileRef);
+        pstmt->executeUpdate();
+        delete pstmt;
+    }
+    
+    const char* putversionrec = "insert into versionrec values(?,?,?,?,?,?,?)";
     pstmt = dbcon->prepareStatement(putversionrec);
     pstmt->setInt(1, NULL);
     pstmt->setString(2, fileRef);
