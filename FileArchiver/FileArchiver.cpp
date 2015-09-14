@@ -85,7 +85,7 @@ void FileArchiver::insertNew(const std::string& filePath, const std::string& com
     };
 }
 
-void FileArchiver::update(const std::string& filePath, const std::string& comment) {
+bool FileArchiver::update(const std::string& filePath, const std::string& comment) {
     boost::uuids::random_generator generator;
     boost::uuids::uuid uniqueId = generator();
     std::string retrievedFilePath = "/tmp/" + boost::uuids::to_string(uniqueId);
@@ -127,7 +127,7 @@ void FileArchiver::update(const std::string& filePath, const std::string& commen
             // Compressing a block   
             QByteArray qBlockBytes(blockBytes, blockLength);
             QByteArray qBlockBytesCompressed = qCompress(qBlockBytes);
-   
+
             Block block;
             block.blockNum = i;
             block.bytes = new char[qBlockBytesCompressed.size()];
@@ -135,7 +135,7 @@ void FileArchiver::update(const std::string& filePath, const std::string& commen
             block.hash = newerFileBlockHashes.at(i);
             block.length = qBlockBytesCompressed.size();
             newerVersion.addBlock(block);
-            
+
             delete blockBytes;
         }
     }
@@ -144,6 +144,7 @@ void FileArchiver::update(const std::string& filePath, const std::string& commen
     std::remove(retrievedFilePath.c_str());
     connection->close();
     delete connection;
+    return true;
 }
 
 void FileArchiver::retrieveFile(const std::string& filePath, const std::string& destinationFilePath, const int versionNum) {
@@ -169,23 +170,23 @@ void FileArchiver::retrieveFile(const std::string& filePath, const std::string& 
             std::istream* blobStream = result->getBlob(1);
             tempFileZip << blobStream->rdbuf();
             tempFileZip.close();
-            
+
             std::string tempFilePath = "/tmp/" + boost::uuids::to_string(generator());
             std::string modifiedFilePath;
-            
+
             if (decompressFile(tempFileZipPath, tempFilePath)) {
-                    std::remove(tempFileZipPath.c_str());
+                std::remove(tempFileZipPath.c_str());
                 fileRec existingFileRec;
                 std::vector<versionRec> allVersions = existingFileRec.returnVector(filePath, versionNum, connection);
 
                 for (std::vector<versionRec>::iterator version = allVersions.begin(); version != allVersions.end(); ++version) {
-                    modifiedFilePath = "/tmp/" + boost::uuids::to_string(generator());   
+                    modifiedFilePath = "/tmp/" + boost::uuids::to_string(generator());
                     std::size_t tempFileSize = fileSize(tempFilePath.c_str());
                     std::fstream tempFile(tempFilePath.c_str(), std::ios_base::binary | std::ios_base::in);
                     std::fstream modifiedFile(modifiedFilePath.c_str(), std::ios_base::binary | std::ios_base::out);
-                    
+
                     std::vector<Block> allBlocks = version->getBlocks();
-                    
+
                     // Original blocks
                     for (std::size_t i = 0; i < version->getLength() && i < tempFileSize; i += BLOCK_SIZE) {
                         int readSize = version->getLength() - i < BLOCK_SIZE ? version->getLength() - i : BLOCK_SIZE;
@@ -202,25 +203,25 @@ void FileArchiver::retrieveFile(const std::string& filePath, const std::string& 
                         // Decompressing a block
                         QByteArray qBlockBytesCompressed((*block).bytes, (*block).length);
                         QByteArray qBlockBytes = qUncompress(qBlockBytesCompressed);
-                        
+
                         modifiedFile.seekp(blockNum * BLOCK_SIZE);
                         modifiedFile.write(qBlockBytes.data(), qBlockBytes.size());
                     }
-                    
+
                     tempFile.close();
                     modifiedFile.close();
                     std::remove(tempFilePath.c_str());
                     tempFilePath = modifiedFilePath;
                 }
-                
+
                 std::fstream finalFile(modifiedFilePath.c_str(), std::ios_base::binary | std::ios_base::in);
                 std::fstream destinationFile(destinationFilePath.c_str(), std::ios_base::binary | std::ios_base::out);
-                
+
                 destinationFile << finalFile.rdbuf();
                 finalFile.close();
                 destinationFile.close();
                 std::remove(modifiedFilePath.c_str());
-            } 
+            }
             else {
                 std::remove(tempFileZipPath.c_str());
             }
@@ -228,6 +229,32 @@ void FileArchiver::retrieveFile(const std::string& filePath, const std::string& 
     }
     delete statement;
     delete result;
+}
+
+bool FileArchiver::setReference(std::string filename, int versionnum, std::string comment) {
+    return true;
+}
+
+std::vector<versionRec> FileArchiver::getVersionInfo(const std::string& filePath) {
+    sql::Connection* connection = connectDB();
+    std::vector<versionRec> allVersions;
+    
+    const char* sql_getLatestVersionNum = "SELECT currentversion FROM `filerec` WHERE filename = ?";
+    sql::PreparedStatement* statement = connection->prepareStatement(sql_getLatestVersionNum);
+    statement->setString(1, filePath);
+    sql::ResultSet* result = statement->executeQuery();
+    if (result->next()) {
+        int currentVersion = result->getInt(1);
+        fileRec existingFileRec;
+        allVersions = existingFileRec.returnVector(filePath, currentVersion, connection);
+    }
+    delete statement;
+    delete result;
+    
+    connection->close();
+    delete connection;
+    
+    return allVersions;
 }
 
 sql::Connection* FileArchiver::connectDB(bool checkSchema) {

@@ -62,20 +62,21 @@ public:
      * @param filename The path of the file to be updated to the database
      * @param comment The comment of the update
      */
-    void update(const std::string& filePath, const std::string& comment);
+    bool update(const std::string& filePath, const std::string& comment);
 
     void retrieveFile(const std::string& filePath, const std::string& destinationFilePath, const int versionNum);
 
     void retrieveFile(const std::string& filePath, const std::string& destinationFilePath, const int versionNum, sql::Connection* connection);
     
-    void setReference(std::string filename, int versionnum, std::string comment);
+    bool setReference(std::string filename, int versionnum, std::string comment);
     
+    std::vector<versionRec> getVersionInfo(const std::string& filePath);
     
 private:
-    const char* DB_HOSTNAME;
-    const char* DB_USERNAME;
-    const char* DB_PASSWORD;
-    const char* DB_SCHEMA;
+    sql::SQLString DB_HOSTNAME;
+    sql::SQLString DB_USERNAME;
+    sql::SQLString DB_PASSWORD;
+    sql::SQLString DB_SCHEMA;
     
     /**
      * Create a connection to the MySQL database and validate the schema if specified.

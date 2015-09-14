@@ -49,7 +49,6 @@ public:
     uint32_t getHash() { return fileHash; }
     std::vector<Block> getBlocks() { return blocks; }
     
-    
     /**
      * Setters
      * TODO: delete unused ones
