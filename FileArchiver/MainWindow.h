@@ -113,6 +113,11 @@ private:
     bool saveFile;
     
     /**
+     * To detect the status of program can carry out save process or not
+     */
+    bool enableSave;
+    
+    /**
      * One of the parameter need in QMessageBox::information, and so on
      */
     QWidget*parent;  
