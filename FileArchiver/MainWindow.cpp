@@ -61,11 +61,11 @@ void MainWindow::retrieveVersionDataForFile(){
     if(!saveFile)
     {
         versionRec ver;
-        ver.setVersionNumber(999);
-        ver.setModifyTime(99999);
-        ver.setLength(9999);
+        ver.setVersionNumber(-99);
+        ver.setModifyTime(getFileModifyTime(fileSelect.toStdString()));
+        ver.setLength(fileSize(fileSelect.toStdString()));
         ver.setSymbol(0);
-        
+        ver.setComment("The file have not been saved");
         data->push_back(ver);
     }
     tableModel->resetData(data);
@@ -153,7 +153,7 @@ void MainWindow::retrieveVersion()
     {
         directoryPath.append('/');
         directoryPath.append(fileName);
-        file.retrieveVersion(fileSelect.toStdString(), directoryPath.toStdString(),
+        file.retrieveFile(fileSelect.toStdString(), directoryPath.toStdString(),
                 fileVersionSelectedInTable);
     }
     else
