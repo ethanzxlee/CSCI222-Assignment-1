@@ -46,13 +46,13 @@ void MainWindow::selectFile()
         }
         else
             widget.warningFrame->setPlainText("The file does not been saved into the database yet");
+        enableSave = true;
     }
 }
 
 void MainWindow::retrieveVersionDataForFile(){
     data->clear();
-    std::vector<versionRec>temp = file.getVersionInfo(fileSelect.toStdString()); 
-    std::cout<<"Size: "<<temp.size()<<std::endl;
+    std::vector<versionRec>temp = file.getVersionInfo(fileSelect.toStdString());  
     totalEnableForSelection = temp.size();
     for (unsigned int a=0; a<temp.size();a++)
     {
@@ -76,6 +76,13 @@ void MainWindow::retrieveVersionDataForFile(){
 
 void MainWindow::saveCurrent()
 {
+    if(!enableSave)
+    {
+        std::string msg = "The file has not been uploaded";
+        QMessageBox::critical(this,"Retrieve Version",msg.c_str(),
+            QMessageBox::Ok,QMessageBox::Cancel);
+        return ;
+    }
     bool ok;
     QString comment = QInputDialog::getText(this,"GetCommentForm","Comment",
                         QLineEdit::Normal,QDir::home().dirName(), &ok);
@@ -109,6 +116,7 @@ void MainWindow::saveCurrent()
         {
             file.insertNew(fileSelect.toStdString(), comment.toStdString());
             widget.fileField->clear();
+            enableSave = false;
             saveFile = true;
         }
         retrieveVersionDataForFile();
@@ -145,7 +153,13 @@ void MainWindow::showComment()
 
 void MainWindow::retrieveVersion()
 {
-    
+    if(fileVersionSelectedInTable<0)
+    {
+        std::string msg = "There are not file been selected";
+        QMessageBox::critical(this,"Retrieve Version",msg.c_str(),
+            QMessageBox::Ok,QMessageBox::Cancel);
+        return ;
+    }
     RetrieveForm *rf = new RetrieveForm;
     rf->exec();
 
