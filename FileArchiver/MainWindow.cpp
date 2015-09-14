@@ -55,8 +55,10 @@ void MainWindow::retrieveVersionDataForFile(){
     std::vector<versionRec>temp = file.getVersionInfo(fileSelect.toStdString());  
     totalEnableForSelection = temp.size();
     for (unsigned int a=0; a<temp.size();a++)
+    {
+        temp[a].setSymbol(1);
         data->push_back(temp[a]);
-    
+    }
     // File have not been saved
     if(!saveFile)
     {
@@ -108,6 +110,7 @@ void MainWindow::saveCurrent()
             file.insertNew(fileSelect.toStdString(), comment.toStdString());
             fileSelect.clear();
             widget.fileField->clear();
+            saveFile = true;
         }
         retrieveVersionDataForFile();
     }
