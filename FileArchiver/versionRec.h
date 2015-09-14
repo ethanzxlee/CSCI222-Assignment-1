@@ -48,6 +48,8 @@ public:
     long int getModifyTime() { return modifyTime; }
     uint32_t getHash() { return fileHash; }
     std::vector<Block> getBlocks() { return blocks; }
+    int getSymbol(){ return symbolDecision;}
+    std::string getComment(){ return comment;}
     
     /**
      * Setters
@@ -58,7 +60,8 @@ public:
     void setLength(const std::size_t& x) { length = x; }
     void setModifyTime(const long int& x) { modifyTime = x; }
     void setHash(const uint32_t& x) { fileHash = x; }   
-    
+    void setComment(const std::string & x){ comment=x;}
+    void setSymbol(int x){ symbolDecision = x;}
     /**
      * This is meant to be private currently public for testing purposes
      */
@@ -74,6 +77,7 @@ private:
     uint32_t fileHash;
     std::string comment;
     std::vector<Block> blocks;
+    int symbolDecision;
     
     //Database variable
     sql::Connection *dbcon;
