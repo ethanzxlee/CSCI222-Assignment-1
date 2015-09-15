@@ -2,6 +2,7 @@
 #include <iostream>
 #include "TableModel.h"
 #include <QTableWidgetItem>
+#include <QDateTime>
 TableModel::TableModel(QObject *parent)
 :QAbstractTableModel(parent){
     correctIcon = convertImage("./images/saved.jpg");
@@ -50,11 +51,9 @@ QVariant TableModel::data(const QModelIndex &index, int role)const{
         }
         if(index.column()==2)
         {
-            std::string temp;
-            std::ostringstream converter;
-            converter<<recordsCollection->at(index.row()).getModifyTime();
-            temp = converter.str();
-            return QString(temp.c_str());
+            qint64 modifyTime = recordsCollection->at(index.row()).getModifyTime();
+            QDateTime qModifyTime = QDateTime::fromMSecsSinceEpoch(modifyTime * 1000);
+            return qModifyTime.toString("yyyy-MM-dd hh:mm:ss");
         }
         if(index.column()==3)
         {
