@@ -17,7 +17,6 @@
 #include <QtGui/QLabel>
 #include <QtGui/QLineEdit>
 #include <QtGui/QMainWindow>
-#include <QtGui/QPlainTextEdit>
 #include <QtGui/QPushButton>
 #include <QtGui/QStatusBar>
 #include <QtGui/QTableView>
@@ -38,75 +37,62 @@ public:
     QPushButton *SetReferenceButton;
     QPushButton *ShowCommentButton;
     QTableView *fileView;
-    QPlainTextEdit *warningFrame;
-    QStatusBar *statusbar;
+    QStatusBar *warningFrame;
 
     void setupUi(QMainWindow *MainWindow)
     {
         if (MainWindow->objectName().isEmpty())
             MainWindow->setObjectName(QString::fromUtf8("MainWindow"));
-        MainWindow->resize(591, 578);
+        MainWindow->resize(868, 568);
         centralwidget = new QWidget(MainWindow);
         centralwidget->setObjectName(QString::fromUtf8("centralwidget"));
         label = new QLabel(centralwidget);
         label->setObjectName(QString::fromUtf8("label"));
-        label->setGeometry(QRect(20, 20, 66, 17));
+        label->setGeometry(QRect(20, 30, 66, 17));
+        QFont font;
+        font.setPointSize(12);
+        label->setFont(font);
         label_2 = new QLabel(centralwidget);
         label_2->setObjectName(QString::fromUtf8("label_2"));
         label_2->setGeometry(QRect(20, 70, 131, 17));
-        QFont font;
-        font.setPointSize(15);
-        font.setBold(false);
-        font.setWeight(50);
-        label_2->setFont(font);
+        QFont font1;
+        font1.setPointSize(15);
+        font1.setBold(false);
+        font1.setWeight(50);
+        label_2->setFont(font1);
         fileField = new QLineEdit(centralwidget);
         fileField->setObjectName(QString::fromUtf8("fileField"));
         fileField->setEnabled(false);
-        fileField->setGeometry(QRect(50, 20, 431, 27));
+        fileField->setGeometry(QRect(50, 20, 661, 27));
         selectFileButton = new QPushButton(centralwidget);
         selectFileButton->setObjectName(QString::fromUtf8("selectFileButton"));
-        selectFileButton->setGeometry(QRect(490, 20, 98, 27));
+        selectFileButton->setGeometry(QRect(717, 20, 141, 27));
         SaveCurrentButton = new QPushButton(centralwidget);
         SaveCurrentButton->setObjectName(QString::fromUtf8("SaveCurrentButton"));
-        SaveCurrentButton->setGeometry(QRect(450, 90, 141, 27));
+        SaveCurrentButton->setGeometry(QRect(720, 90, 141, 27));
         RetrieveVersionButton = new QPushButton(centralwidget);
         RetrieveVersionButton->setObjectName(QString::fromUtf8("RetrieveVersionButton"));
-        RetrieveVersionButton->setGeometry(QRect(450, 130, 141, 27));
+        RetrieveVersionButton->setGeometry(QRect(720, 140, 141, 27));
         SetReferenceButton = new QPushButton(centralwidget);
         SetReferenceButton->setObjectName(QString::fromUtf8("SetReferenceButton"));
-        SetReferenceButton->setGeometry(QRect(450, 170, 141, 27));
+        SetReferenceButton->setGeometry(QRect(720, 190, 141, 27));
         ShowCommentButton = new QPushButton(centralwidget);
         ShowCommentButton->setObjectName(QString::fromUtf8("ShowCommentButton"));
-        ShowCommentButton->setGeometry(QRect(450, 210, 141, 27));
+        ShowCommentButton->setGeometry(QRect(720, 240, 141, 27));
         fileView = new QTableView(centralwidget);
         fileView->setObjectName(QString::fromUtf8("fileView"));
         fileView->setEnabled(true);
-        fileView->setGeometry(QRect(20, 110, 421, 411));
+        fileView->setGeometry(QRect(20, 90, 691, 431));
         fileView->setLayoutDirection(Qt::LeftToRight);
         fileView->setLineWidth(1);
-        fileView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+        fileView->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
         fileView->setTextElideMode(Qt::ElideRight);
         fileView->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
         fileView->horizontalHeader()->setCascadingSectionResizes(true);
-        warningFrame = new QPlainTextEdit(centralwidget);
-        warningFrame->setObjectName(QString::fromUtf8("warningFrame"));
-        warningFrame->setEnabled(false);
-        warningFrame->setGeometry(QRect(20, 90, 421, 31));
-        warningFrame->setBackgroundVisible(true);
         MainWindow->setCentralWidget(centralwidget);
-        label->raise();
-        label_2->raise();
-        fileField->raise();
-        selectFileButton->raise();
-        SaveCurrentButton->raise();
-        RetrieveVersionButton->raise();
-        SetReferenceButton->raise();
-        ShowCommentButton->raise();
-        warningFrame->raise();
-        fileView->raise();
-        statusbar = new QStatusBar(MainWindow);
-        statusbar->setObjectName(QString::fromUtf8("statusbar"));
-        MainWindow->setStatusBar(statusbar);
+        warningFrame = new QStatusBar(MainWindow);
+        warningFrame->setObjectName(QString::fromUtf8("warningFrame"));
+        MainWindow->setStatusBar(warningFrame);
 
         retranslateUi(MainWindow);
 
@@ -115,7 +101,7 @@ public:
 
     void retranslateUi(QMainWindow *MainWindow)
     {
-        MainWindow->setWindowTitle(QApplication::translate("MainWindow", "MainWindow", 0, QApplication::UnicodeUTF8));
+        MainWindow->setWindowTitle(QApplication::translate("MainWindow", "File Archiver V1.3", 0, QApplication::UnicodeUTF8));
         label->setText(QApplication::translate("MainWindow", "File", 0, QApplication::UnicodeUTF8));
         label_2->setText(QApplication::translate("MainWindow", "Version Data", 0, QApplication::UnicodeUTF8));
         selectFileButton->setText(QApplication::translate("MainWindow", "Select File", 0, QApplication::UnicodeUTF8));

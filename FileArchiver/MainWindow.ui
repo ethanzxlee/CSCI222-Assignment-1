@@ -6,22 +6,27 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>591</width>
-    <height>578</height>
+    <width>868</width>
+    <height>568</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>File Archiver V1.3</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>20</y>
+      <y>30</y>
       <width>66</width>
       <height>17</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>File</string>
@@ -55,7 +60,7 @@
      <rect>
       <x>50</x>
       <y>20</y>
-      <width>431</width>
+      <width>661</width>
       <height>27</height>
      </rect>
     </property>
@@ -63,9 +68,9 @@
    <widget class="QPushButton" name="selectFileButton">
     <property name="geometry">
      <rect>
-      <x>490</x>
+      <x>717</x>
       <y>20</y>
-      <width>98</width>
+      <width>141</width>
       <height>27</height>
      </rect>
     </property>
@@ -76,7 +81,7 @@
    <widget class="QPushButton" name="SaveCurrentButton">
     <property name="geometry">
      <rect>
-      <x>450</x>
+      <x>720</x>
       <y>90</y>
       <width>141</width>
       <height>27</height>
@@ -89,8 +94,8 @@
    <widget class="QPushButton" name="RetrieveVersionButton">
     <property name="geometry">
      <rect>
-      <x>450</x>
-      <y>130</y>
+      <x>720</x>
+      <y>140</y>
       <width>141</width>
       <height>27</height>
      </rect>
@@ -102,8 +107,8 @@
    <widget class="QPushButton" name="SetReferenceButton">
     <property name="geometry">
      <rect>
-      <x>450</x>
-      <y>170</y>
+      <x>720</x>
+      <y>190</y>
       <width>141</width>
       <height>27</height>
      </rect>
@@ -115,8 +120,8 @@
    <widget class="QPushButton" name="ShowCommentButton">
     <property name="geometry">
      <rect>
-      <x>450</x>
-      <y>210</y>
+      <x>720</x>
+      <y>240</y>
       <width>141</width>
       <height>27</height>
      </rect>
@@ -132,9 +137,9 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>110</y>
-      <width>421</width>
-      <height>411</height>
+      <y>90</y>
+      <width>691</width>
+      <height>431</height>
      </rect>
     </property>
     <property name="layoutDirection">
@@ -144,7 +149,7 @@
      <number>1</number>
     </property>
     <property name="horizontalScrollBarPolicy">
-     <enum>Qt::ScrollBarAlwaysOn</enum>
+     <enum>Qt::ScrollBarAsNeeded</enum>
     </property>
     <property name="textElideMode">
      <enum>Qt::ElideRight</enum>
@@ -156,34 +161,8 @@
      <bool>true</bool>
     </attribute>
    </widget>
-   <widget class="QPlainTextEdit" name="warningFrame">
-    <property name="enabled">
-     <bool>false</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>90</y>
-      <width>421</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="backgroundVisible">
-     <bool>true</bool>
-    </property>
-   </widget>
-   <zorder>label</zorder>
-   <zorder>label_2</zorder>
-   <zorder>fileField</zorder>
-   <zorder>selectFileButton</zorder>
-   <zorder>SaveCurrentButton</zorder>
-   <zorder>RetrieveVersionButton</zorder>
-   <zorder>SetReferenceButton</zorder>
-   <zorder>ShowCommentButton</zorder>
-   <zorder>warningFrame</zorder>
-   <zorder>fileView</zorder>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QStatusBar" name="warningFrame"/>
  </widget>
  <resources/>
  <connections/>

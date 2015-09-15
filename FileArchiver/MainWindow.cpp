@@ -10,6 +10,7 @@
 #include <string>
 MainWindow::MainWindow(std::vector<versionRec>* Data) {
     data=Data;
+    enableSave = false;
     parent=0;
     fileVersionSelectedInTable=-1;
     widget.setupUi(this);
@@ -40,15 +41,18 @@ void MainWindow::selectFile()
         widget.fileField->setText(fileSelection);
         saveFile = false;
         fileVersionSelectedInTable=-1;
-        if(file.exists(fileSelect.toStdString())){
-            retrieveVersionDataForFile();
-            widget.warningFrame->setPlainText("The older version(s) of file been stated as below");
+        if(!file.exists(fileSelect.toStdString())){
+            QString status="The file has NOT previously archived, an initial entry will be created.";
+            widget.warningFrame->showMessage(status);
         }
         else
-            widget.warningFrame->setPlainText("The file does not been saved into the database yet");
+            widget.warningFrame->clearMessage();
+            
+        retrieveVersionDataForFile();
         enableSave = true;
     }
-}
+
+ }
 
 void MainWindow::retrieveVersionDataForFile(){
     data->clear();
@@ -59,6 +63,7 @@ void MainWindow::retrieveVersionDataForFile(){
         temp[a].setSymbol(1);
         data->push_back(temp[a]);
     }
+    
     // File have not been saved
     if(!saveFile)
     {
@@ -72,6 +77,10 @@ void MainWindow::retrieveVersionDataForFile(){
     }
     tableModel->resetData(data);
     widget.fileView->resizeColumnsToContents();
+    widget.fileView->setColumnWidth(2,200);
+    widget.fileView->setColumnWidth(3,100);
+    for(unsigned int a=0; a<data->size();a++)
+        widget.fileView->setRowHeight(a,40);
 }
 
 void MainWindow::saveCurrent()
@@ -103,21 +112,29 @@ void MainWindow::saveCurrent()
                         QMessageBox::Ok,QMessageBox::Cancel);
                 }
                 else
+                {
                     saveFile = true;
+                    QString status="The file successfully uploaded  . . . .100%";
+                    widget.warningFrame->showMessage(status);
+                }
+                    
             }
             else
             {
-                std::string msg  ="The file has NOT been modified no save required";
+                std::string msg  ="The file has NOT been modified, no save required.";
                 QMessageBox::information(this,fileSelect,msg.c_str(),
                         QMessageBox::Ok,QMessageBox::Cancel);
             }
         }
         else
         {
+            
             file.insertNew(fileSelect.toStdString(), comment.toStdString());
             widget.fileField->clear();
             enableSave = false;
             saveFile = true;
+            QString status="The file successfully uploaded  . . . .100%";
+            widget.warningFrame->showMessage(status);
         }
         retrieveVersionDataForFile();
     }
@@ -171,6 +188,9 @@ void MainWindow::retrieveVersion()
         directoryPath.append(fileName);
         file.retrieveFile(fileSelect.toStdString(), directoryPath.toStdString(),
                 fileVersionSelectedInTable);
+        
+        QString status="The file successfully retrieved  . . . .100%";
+        widget.warningFrame->showMessage(status);
     }
     else
     {
@@ -228,6 +248,12 @@ void MainWindow::setAsReference()
                 msg.append(" drop successfully");
                 QMessageBox::information(this,fileSelect,msg.c_str(),
                     QMessageBox::Ok,QMessageBox::Cancel);
+                
+                QString status="The file version ";
+                status.append(converter.str().c_str());
+                msg = " successfully set as reference";
+                status.append(msg.c_str());
+                widget.warningFrame->showMessage(status);
             }
             else
             {

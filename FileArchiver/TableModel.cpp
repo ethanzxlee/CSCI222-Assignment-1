@@ -2,11 +2,10 @@
 #include <iostream>
 #include "TableModel.h"
 #include <QTableWidgetItem>
-#include <QDateTime>
 TableModel::TableModel(QObject *parent)
 :QAbstractTableModel(parent){
-    correctIcon = convertImage("./images/saved.jpg");
-    wrongIcon = convertImage("./images/unsaved.jpg");
+    correctIcon = convertImage("./images/saved.png");
+    wrongIcon = convertImage("./images/unsaved.png");
 }
 
 void TableModel::addTheData(std::vector<versionRec> *data)
@@ -31,7 +30,7 @@ QVariant TableModel::headerData(int section, Qt::Orientation orientation, int ro
             switch(section){
                 case 0: return QString("Saved");
                 case 1: return QString("Version#");
-                case 2: return QString("Data");
+                case 2: return QString("Date");
                 case 3: return QString("Size");
             }
         }
@@ -40,6 +39,8 @@ QVariant TableModel::headerData(int section, Qt::Orientation orientation, int ro
 }
 
 QVariant TableModel::data(const QModelIndex &index, int role)const{
+    if (role == Qt::TextAlignmentRole )
+        return Qt::AlignCenter;
     if(role==Qt::DisplayRole){
         if(index.column()==1)
         {
@@ -102,7 +103,7 @@ std::string TableModel::convertImage(std::string imgFile)
         
     QByteArray qba;
     QBuffer qb(&qba);
-    imgLoad.save(&qb,"JPG");
+    imgLoad.save(&qb,"PNG");
     
     QByteArray coded = qba.toBase64();
     std::string finalResult(coded);
