@@ -10,7 +10,7 @@
 FileArchiver::FileArchiver() throw (sql::SQLException) {
     DB_HOSTNAME = "tcp://127.0.0.1:3306";
     DB_USERNAME = "root";
-    DB_PASSWORD = "1qaz2wsxmko0nji9";
+    DB_PASSWORD = "";
     DB_SCHEMA = "FileArchiver";
 
     sql::Connection* connection = connectDB(true);
@@ -226,7 +226,84 @@ void FileArchiver::retrieveFile(const std::string& filePath, const std::string& 
     delete result;
 }
 
-bool FileArchiver::setReference(std::string filename, int versionnum, std::string comment) {
+bool FileArchiver::setReference(const std::string filePath, int versionNum, std::string comment) {
+    sql::Connection* connection = connectDB();
+    boost::uuids::random_generator generator;
+    boost::uuids::uuid uniqueId = generator();
+    std::string tempFilePath = "/tmp/" + boost::uuids::to_string(uniqueId);
+    
+    retrieveFile(filePath, tempFilePath, versionNum, connection);
+    sql::PreparedStatement *pstmt = NULL;
+    sql::ResultSet *result = NULL;
+    fileRec newFileRec;
+    
+    std::cout << "Hello" << std::endl;
+    if (compressFile(filePath, tempFilePath)){
+        std::cout << "Oops" << std::endl;
+        newFileRec.createData(filePath, tempFilePath, comment, connection);
+        newFileRec.setRefNumber(versionNum);   
+
+        const char* updateFileRec = "UPDATE `filerec` SET `ovhash`=?, `currentversion`=?, `nversion`= nversion - ?, `length`=?, `filedata`=? WHERE `filename`=?";     
+        pstmt = connection->prepareStatement(updateFileRec);
+        pstmt->setUInt64(1, newFileRec.getFileHash());
+        pstmt->setInt(2, newFileRec.getRefNumber());
+        pstmt->setInt(3, versionNum);
+        pstmt->setInt(4, newFileRec.getLength());
+        
+        std::ifstream ins(tempFilePath.c_str());
+        pstmt->setBlob(5, &ins);
+        pstmt->setString(6, filePath);
+        
+        pstmt->executeUpdate();
+        delete pstmt;
+        std::remove(tempFilePath.c_str());
+    }
+    
+    const char* updateFileBlkHashes = "UPDATE `fileblkhashes` SET `hashval`=? WHERE `fileref`=?";
+    pstmt = connection->prepareStatement(updateFileBlkHashes);
+    pstmt->setUInt64(1, newFileRec.getFileHash());
+    pstmt->setString(2, filePath);
+    pstmt->executeUpdate();
+    delete pstmt;
+    
+    std::vector<int> versionID;
+    const char* selectID = "SELECT idversionrec FROM `versionrec` WHERE `fileref`=? and `versionnum`<?";
+    pstmt = connection->prepareStatement(selectID);
+    pstmt->setString(1, filePath);
+    pstmt->setInt(2, versionNum);
+    result = pstmt->executeQuery();
+    while(result->next()){
+        int temp = result->getInt(1);
+        versionID.push_back(temp);
+    }
+    delete result;
+    delete pstmt;
+    
+    if(versionID.size() > 0){
+        const char* removeBlkTable = "DELETE FROM `blktable` WHERE `version`=?";
+        pstmt = connection->prepareStatement(removeBlkTable);
+        
+        std::vector<int>::const_iterator it1;
+        for(it1 = versionID.begin(); it1 != versionID.end(); it1++){
+            pstmt->setInt(1, *it1);
+            pstmt->executeUpdate();
+        }
+        delete pstmt;
+        
+        const char* removeVersionRec = "DELETE FROM `versionrec` WHERE `idversionrec`=?";
+        pstmt = connection->prepareStatement(removeVersionRec);
+        
+        std::vector<int>::const_iterator it2;
+        for(it2 = versionID.begin(); it2 != versionID.end(); it2++){
+            if((*it2) < versionNum){
+                pstmt->setInt(1, *it2);
+                pstmt->executeUpdate();
+            }
+        }
+        delete pstmt;
+    }
+    
+    connection->close();
     return true;
 }
 

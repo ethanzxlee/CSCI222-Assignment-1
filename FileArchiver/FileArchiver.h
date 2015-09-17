@@ -68,7 +68,7 @@ public:
 
     void retrieveFile(const std::string& filePath, const std::string& destinationFilePath, const int versionNum, sql::Connection* connection);
     
-    bool setReference(std::string filename, int versionnum, std::string comment);
+    bool setReference(const std::string filePath, int versionNum, std::string comment);
     
     std::vector<versionRec> getVersionInfo(const std::string& filePath);
     
