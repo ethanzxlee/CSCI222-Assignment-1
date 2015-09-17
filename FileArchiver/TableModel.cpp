@@ -82,7 +82,7 @@ QVariant TableModel::data(const QModelIndex &index, int role)const{
         {
             std::string temp=recordsCollection->at(index.row()).getComment();
             std::string newTmp;
-            newTmp = temp.substr(0,15);
+            newTmp = temp.substr(0,20);
             if(temp.length()>=12)newTmp.append(" . . . ");
             return QString(newTmp.c_str());
         }

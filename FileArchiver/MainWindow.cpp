@@ -20,7 +20,7 @@ MainWindow::MainWindow(std::vector<versionRec>* Data) {
     
     widget.fileView->setModel(tableModel);
     widget.fileView->setSelectionBehavior(QAbstractItemView::SelectRows);
-    widget.fileView->setColumnWidth(4,130);
+    widget.fileView->setColumnWidth(4,180);
     connect(widget.selectFileButton,SIGNAL(clicked()),this, SLOT(selectFile()));
     connect(widget.SaveCurrentButton,SIGNAL(clicked()),this, SLOT(saveCurrent()));
     connect(widget.SetReferenceButton,SIGNAL(clicked()),this, SLOT(setAsReference()));
@@ -80,7 +80,7 @@ void MainWindow::retrieveVersionDataForFile(){
     widget.fileView->resizeColumnsToContents();
     widget.fileView->setColumnWidth(2,200);
     widget.fileView->setColumnWidth(3,100);
-    widget.fileView->setColumnWidth(4,130);
+    widget.fileView->setColumnWidth(4,180);
     for(unsigned int a=0; a<data->size();a++)
         widget.fileView->setRowHeight(a,40);
 }
