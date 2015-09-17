@@ -37,7 +37,7 @@ public:
     QPushButton *SetReferenceButton;
     QPushButton *ShowCommentButton;
     QTableView *fileView;
-    QStatusBar *warningFrame;
+    QStatusBar *statusBar;
 
     void setupUi(QMainWindow *MainWindow)
     {
@@ -90,9 +90,9 @@ public:
         fileView->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
         fileView->horizontalHeader()->setCascadingSectionResizes(true);
         MainWindow->setCentralWidget(centralwidget);
-        warningFrame = new QStatusBar(MainWindow);
-        warningFrame->setObjectName(QString::fromUtf8("warningFrame"));
-        MainWindow->setStatusBar(warningFrame);
+        statusBar = new QStatusBar(MainWindow);
+        statusBar->setObjectName(QString::fromUtf8("statusBar"));
+        MainWindow->setStatusBar(statusBar);
 
         retranslateUi(MainWindow);
 
