@@ -128,6 +128,7 @@ void MainWindow::saveCurrent()
                         QMessageBox::Ok,QMessageBox::Cancel);
             }
             widget.fileField->clear();
+            enableSave = false;
         }
         else
         {
