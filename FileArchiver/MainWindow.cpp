@@ -20,6 +20,7 @@ MainWindow::MainWindow(std::vector<versionRec>* Data) {
     
     widget.fileView->setModel(tableModel);
     widget.fileView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    widget.fileView->setColumnWidth(4,180);
     connect(widget.selectFileButton,SIGNAL(clicked()),this, SLOT(selectFile()));
     connect(widget.SaveCurrentButton,SIGNAL(clicked()),this, SLOT(saveCurrent()));
     connect(widget.SetReferenceButton,SIGNAL(clicked()),this, SLOT(setAsReference()));
@@ -43,10 +44,10 @@ void MainWindow::selectFile()
         fileVersionSelectedInTable=-1;
         if(!file.exists(fileSelect.toStdString())){
             QString status="The file has NOT previously archived, an initial entry will be created.";
-            widget.warningFrame->showMessage(status);
+            widget.statusBar->showMessage(status);
         }
         else
-            widget.warningFrame->clearMessage();
+            widget.statusBar->clearMessage();
             
         retrieveVersionDataForFile();
         enableSave = true;
@@ -79,6 +80,7 @@ void MainWindow::retrieveVersionDataForFile(){
     widget.fileView->resizeColumnsToContents();
     widget.fileView->setColumnWidth(2,200);
     widget.fileView->setColumnWidth(3,100);
+    widget.fileView->setColumnWidth(4,180);
     for(unsigned int a=0; a<data->size();a++)
         widget.fileView->setRowHeight(a,40);
 }
@@ -115,7 +117,7 @@ void MainWindow::saveCurrent()
                 {
                     saveFile = true;
                     QString status="The file successfully uploaded  . . . .100%";
-                    widget.warningFrame->showMessage(status);
+                    widget.statusBar->showMessage(status);
                 }
                     
             }
@@ -125,6 +127,8 @@ void MainWindow::saveCurrent()
                 QMessageBox::information(this,fileSelect,msg.c_str(),
                         QMessageBox::Ok,QMessageBox::Cancel);
             }
+            widget.fileField->clear();
+            enableSave = false;
         }
         else
         {
@@ -134,7 +138,7 @@ void MainWindow::saveCurrent()
             enableSave = false;
             saveFile = true;
             QString status="The file successfully uploaded  . . . .100%";
-            widget.warningFrame->showMessage(status);
+            widget.statusBar->showMessage(status);
         }
         retrieveVersionDataForFile();
     }
@@ -190,7 +194,7 @@ void MainWindow::retrieveVersion()
                 fileVersionSelectedInTable);
         
         QString status="The file successfully retrieved  . . . .100%";
-        widget.warningFrame->showMessage(status);
+        widget.statusBar->showMessage(status);
     }
     else
     {
@@ -253,7 +257,7 @@ void MainWindow::setAsReference()
                 status.append(converter.str().c_str());
                 msg = " successfully set as reference";
                 status.append(msg.c_str());
-                widget.warningFrame->showMessage(status);
+                widget.statusBar->showMessage(status);
             }
             else
             {

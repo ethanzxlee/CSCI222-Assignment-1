@@ -162,7 +162,7 @@
     </attribute>
    </widget>
   </widget>
-  <widget class="QStatusBar" name="warningFrame"/>
+  <widget class="QStatusBar" name="statusBar"/>
  </widget>
  <resources/>
  <connections/>
