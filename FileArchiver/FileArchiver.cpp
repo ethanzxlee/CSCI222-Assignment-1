@@ -240,6 +240,7 @@ bool FileArchiver::setReference(const std::string filePath, int versionNum, std:
 
     uint32_t fileHash;
     int refNumber = versionNum;
+    int numOfVersions;
     std::size_t length;
     
     if (compressFile(filePath, tempFilePath)){
@@ -254,12 +255,23 @@ bool FileArchiver::setReference(const std::string filePath, int versionNum, std:
         }
         delete pstmt;
         delete result;
+        
+        const char* countVersion = "SELECT COUNT(*) FROM `versionrec` WHERE `fileref`=? AND `versionnum`>=?";
+        pstmt = connection->prepareStatement(countVersion);
+        pstmt->setString(1, filePath);
+        pstmt->setInt(2, versionNum);
+        result = pstmt->executeQuery();
+        if(result->next()){
+            numOfVersions = result->getInt(1);
+        }
+        delete pstmt;
+        delete result;
 
-        const char* updateFileRec = "UPDATE `filerec` SET `ovhash`=?, `currentversion`=?, `nversion`= nversion - ?, `length`=?, `filedata`=? WHERE `filename`=?";     
+        const char* updateFileRec = "UPDATE `filerec` SET `ovhash`=?, `currentversion`=?, `nversion`=?, `length`=?, `filedata`=? WHERE `filename`=?";     
         pstmt = connection->prepareStatement(updateFileRec);
         pstmt->setUInt64(1, fileHash);
         pstmt->setInt(2, refNumber);
-        pstmt->setInt(3, versionNum);
+        pstmt->setInt(3, numOfVersions);
         pstmt->setInt(4, length);
         
         std::ifstream ins(tempFilePath.c_str());
@@ -287,7 +299,7 @@ bool FileArchiver::setReference(const std::string filePath, int versionNum, std:
     delete pstmt;
     
     std::vector<int> versionID;
-    const char* selectID = "SELECT idversionrec FROM `versionrec` WHERE `fileref`=? AND `versionnum`<?";
+    const char* selectID = "SELECT idversionrec FROM `versionrec` WHERE `fileref`=? AND `versionnum`<=?";
     pstmt = connection->prepareStatement(selectID);
     pstmt->setString(1, filePath);
     pstmt->setInt(2, versionNum);
