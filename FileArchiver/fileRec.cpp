@@ -114,7 +114,7 @@ std::vector<versionRec> fileRec::returnVector(const std::string&filePath, int en
     
     std::vector<versionRec> returnRec;
     
-    for (int i = 0; i <= endVersion; ++i) {
+    for (int i = refNumber; i <= endVersion; ++i) {
         versionRec temp;
         temp.createExisting(filePath, i, dbcon);
         returnRec.push_back(temp);
