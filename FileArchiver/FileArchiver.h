@@ -41,36 +41,36 @@ public:
      * @param filename The path of the file to be checked
      * @return true if different, false if same 
      */
-    bool differs(const std::string& filePath);
+    bool differs(const std::string& filePath) throw (sql::SQLException);
     
     /**
      * Check if the file exists in the database
      * @param filename The path of the file to be checked
      * @return true if the file exists in the database
      */
-    bool exists(const std::string& filePath);
+    bool exists(const std::string& filePath) throw (sql::SQLException);
     
     /**
      * Insert a new file into the database
      * @param filename The path of the file to be inserted to the database
      * @param comment The comment of the insertion
      */
-    void insertNew(const std::string& filePath, const std::string& comment);
+    void insertNew(const std::string& filePath, const std::string& comment) throw (sql::SQLException);
     
     /**
      * Update the newer version of file to the database
      * @param filename The path of the file to be updated to the database
      * @param comment The comment of the update
      */
-    bool update(const std::string& filePath, const std::string& comment);
+    bool update(const std::string& filePath, const std::string& comment) throw (sql::SQLException);
 
-    void retrieveFile(const std::string& filePath, const std::string& destinationFilePath, const int versionNum);
+    void retrieveFile(const std::string& filePath, const std::string& destinationFilePath, const int versionNum) throw (sql::SQLException);
 
-    void retrieveFile(const std::string& filePath, const std::string& destinationFilePath, const int versionNum, sql::Connection* connection);
+    void retrieveFile(const std::string& filePath, const std::string& destinationFilePath, const int versionNum, sql::Connection* connection)  throw (sql::SQLException);
     
-    bool setReference(const std::string filePath, int versionNum, std::string comment);
+    bool setReference(const std::string filePath, int versionNum, std::string comment) throw (sql::SQLException);
     
-    std::vector<versionRec> getVersionInfo(const std::string& filePath);
+    std::vector<versionRec> getVersionInfo(const std::string& filePath) throw (sql::SQLException);
     
 private:
     sql::SQLString DB_HOSTNAME;
@@ -84,7 +84,7 @@ private:
      * @param checkSchema true to validate the schema
      * @return A MySQL database connection
      */
-    sql::Connection* connectDB(bool checkSchema = false);
+    sql::Connection* connectDB(bool checkSchema = false) throw (sql::SQLException);
     
     /**
      * Compress a file om disk

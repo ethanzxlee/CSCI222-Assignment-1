@@ -6,11 +6,12 @@
  */
 
 #include "FileArchiver.h"
+#include "fileRec.h"
 
 FileArchiver::FileArchiver() throw (sql::SQLException) {
     DB_HOSTNAME = "tcp://127.0.0.1:3306";
     DB_USERNAME = "root";
-    DB_PASSWORD = "";
+    DB_PASSWORD = "1qaz2wsxmko0nji9";
     DB_SCHEMA = "FileArchiver";
 
     sql::Connection* connection = connectDB(true);
@@ -18,7 +19,7 @@ FileArchiver::FileArchiver() throw (sql::SQLException) {
     delete connection;
 }
 
-bool FileArchiver::differs(const std::string& filePath) {
+bool FileArchiver::differs(const std::string& filePath) throw (sql::SQLException) {
     bool differs = true;
     boost::uuids::random_generator generator;
     boost::uuids::uuid uniqueId = generator();
@@ -44,7 +45,7 @@ bool FileArchiver::differs(const std::string& filePath) {
     return differs;
 }
 
-bool FileArchiver::exists(const std::string& filePath) {
+bool FileArchiver::exists(const std::string& filePath) throw (sql::SQLException) {
     bool exists = false;
     sql::Connection* connection = connectDB();
 
@@ -65,7 +66,7 @@ bool FileArchiver::exists(const std::string& filePath) {
     return exists;
 }
 
-void FileArchiver::insertNew(const std::string& filePath, const std::string& comment) {
+void FileArchiver::insertNew(const std::string& filePath, const std::string& comment) throw (sql::SQLException) {
     boost::uuids::random_generator generator;
     boost::uuids::uuid uniqueId = generator();
     std::string tempFilePath = "/tmp/" + boost::uuids::to_string(uniqueId);
@@ -81,7 +82,7 @@ void FileArchiver::insertNew(const std::string& filePath, const std::string& com
     };
 }
 
-bool FileArchiver::update(const std::string& filePath, const std::string& comment) {
+bool FileArchiver::update(const std::string& filePath, const std::string& comment) throw (sql::SQLException) {
     boost::uuids::random_generator generator;
     boost::uuids::uuid uniqueId = generator();
     std::string retrievedFilePath = "/tmp/" + boost::uuids::to_string(uniqueId);
@@ -143,14 +144,14 @@ bool FileArchiver::update(const std::string& filePath, const std::string& commen
     return true;
 }
 
-void FileArchiver::retrieveFile(const std::string& filePath, const std::string& destinationFilePath, const int versionNum) {
+void FileArchiver::retrieveFile(const std::string& filePath, const std::string& destinationFilePath, const int versionNum) throw (sql::SQLException) {
     sql::Connection* connection = connectDB();
     retrieveFile(filePath, destinationFilePath, versionNum, connection);
     connection->close();
     delete connection;
 }
 
-void FileArchiver::retrieveFile(const std::string& filePath, const std::string& destinationFilePath, const int versionNum, sql::Connection* connection) {
+void FileArchiver::retrieveFile(const std::string& filePath, const std::string& destinationFilePath, const int versionNum, sql::Connection* connection)  throw (sql::SQLException){
     const char* selectBlob = "SELECT filedata FROM filerec WHERE filename = ?";
     sql::PreparedStatement* statement = connection->prepareStatement(selectBlob);
     statement->setString(1, filePath);
@@ -226,7 +227,7 @@ void FileArchiver::retrieveFile(const std::string& filePath, const std::string& 
     delete result;
 }
 
-bool FileArchiver::setReference(const std::string filePath, int versionNum, std::string comment) {
+bool FileArchiver::setReference(const std::string filePath, int versionNum, std::string comment) throw (sql::SQLException) {
     sql::Connection* connection = connectDB();
     boost::uuids::random_generator generator;
     boost::uuids::uuid uniqueId = generator();
@@ -307,7 +308,7 @@ bool FileArchiver::setReference(const std::string filePath, int versionNum, std:
     return true;
 }
 
-std::vector<versionRec> FileArchiver::getVersionInfo(const std::string& filePath) {
+std::vector<versionRec> FileArchiver::getVersionInfo(const std::string& filePath) throw (sql::SQLException) {
     sql::Connection* connection = connectDB();
     std::vector<versionRec> allVersions;
 
@@ -329,7 +330,7 @@ std::vector<versionRec> FileArchiver::getVersionInfo(const std::string& filePath
     return allVersions;
 }
 
-sql::Connection* FileArchiver::connectDB(bool checkSchema) {
+sql::Connection* FileArchiver::connectDB(bool checkSchema) throw (sql::SQLException) {
     sql::Driver* driver = get_driver_instance();
     sql::Connection* connection = driver->connect(DB_HOSTNAME, DB_USERNAME, DB_PASSWORD);
 
@@ -353,7 +354,7 @@ sql::Connection* FileArchiver::connectDB(bool checkSchema) {
         statement->execute();
         delete statement;
 
-        const char* createTable_versionrec = "CREATE TABLE IF NOT EXISTS `FileArchiver`.`versionrec` (`idversionrec` INT(11) NOT NULL AUTO_INCREMENT, `fileref` VARCHAR(255) NOT NULL, `versionnum` INT(11) NOT NULL, `length` INT(11) NOT NULL, `mtsec` INT(11) NOT NULL, `ovhash` INT(24) UNSIGNED NOT NULL, `commenttxt` MEDIUMTEXT NULL, PRIMARY KEY (`idversionrec`), FOREIGN KEY (`fileref`) REFERENCES filerec(`filename`)) ENGINE = InnoDB;";
+        const char* createTable_versionrec = "CREATE TABLE IF NOT EXISTS `FileArchiver`.`versionrec` (`idversionrec` INT(11) NOT NULL AUTO_INCREMENT, `fileref` VARCHAR(255) NOT NULL, `versionnum` INT(11) NOT NULL, `length` INT(11) NOT NULL, `mtsec` INT(11) NOT NULL, `hash` INT(24) UNSIGNED NOT NULL, `commenttxt` MEDIUMTEXT NULL, PRIMARY KEY (`idversionrec`), FOREIGN KEY (`fileref`) REFERENCES filerec(`filename`)) ENGINE = InnoDB;";
         statement = connection->prepareStatement(createTable_versionrec);
         statement->execute();
         delete statement;
