@@ -11,7 +11,7 @@
 FileArchiver::FileArchiver() throw (sql::SQLException) {
     DB_HOSTNAME = "tcp://127.0.0.1:3306";
     DB_USERNAME = "root";
-    DB_PASSWORD = "1qaz2wsxmko0nji9";
+    DB_PASSWORD = "";
     DB_SCHEMA = "FileArchiver";
 
     sql::Connection* connection = connectDB(true);
@@ -228,6 +228,7 @@ void FileArchiver::retrieveFile(const std::string& filePath, const std::string& 
 }
 
 bool FileArchiver::setReference(const std::string filePath, int versionNum, std::string comment) throw (sql::SQLException) {
+    std::cout<<"Version number: "<<versionNum<<std::endl;
     sql::Connection* connection = connectDB();
     boost::uuids::random_generator generator;
     boost::uuids::uuid uniqueId = generator();
@@ -249,7 +250,7 @@ bool FileArchiver::setReference(const std::string filePath, int versionNum, std:
         result = pstmt->executeQuery();
         if(result->next()){
             length = result->getInt("length");
-            fileHash = result->getInt64("ovhash");
+            fileHash = result->getInt64("hash");
         }
         delete pstmt;
         delete result;

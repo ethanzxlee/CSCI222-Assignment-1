@@ -96,7 +96,7 @@ void MainWindow::saveCurrent()
     }
     bool ok;
     QString comment = QInputDialog::getText(this,"GetCommentForm","Comment",
-                        QLineEdit::Normal,QDir::home().dirName(), &ok);
+                        QLineEdit::Normal,"comment", &ok);
    
     if(ok)
     {    
@@ -236,17 +236,17 @@ void MainWindow::setAsReference()
     {
         bool ok;
         QString comment = QInputDialog::getText(this,"GetCommentForm","Comment",
-                            QLineEdit::Normal,QDir::home().dirName(), &ok);
+                            QLineEdit::Normal,"comment", &ok);
 
         if(ok)
         {
             bool success = file.setReference(fileSelect.toStdString(), 
-                    fileVersionSelectedInTable,comment.toStdString());
+                    data->at(fileVersionSelectedInTable).getVersionNumber(),comment.toStdString());
             if(success)
             {
                 std::string msg;
                 std::ostringstream converter;
-                converter<<fileVersionSelectedInTable;
+                converter<<data->at(fileVersionSelectedInTable).getVersionNumber();
                 msg = "The version(s) of file before No. ";
                 msg.append(converter.str());
                 msg.append(" drop successfully");
