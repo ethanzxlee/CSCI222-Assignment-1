@@ -7,6 +7,7 @@
 
 #include "FileArchiver.h"
 #include "fileRec.h"
+#include "helperFuncs.h"
 
 FileArchiver::FileArchiver() throw (sql::SQLException) {
     DB_HOSTNAME = "tcp://127.0.0.1:3306";
@@ -228,22 +229,24 @@ void FileArchiver::retrieveFile(const std::string& filePath, const std::string& 
 }
 
 bool FileArchiver::setReference(const std::string filePath, int versionNum, std::string comment) throw (sql::SQLException) {
-    std::cout<<"Version number: "<<versionNum<<std::endl;
     sql::Connection* connection = connectDB();
+    sql::PreparedStatement *pstmt = NULL;
+    sql::ResultSet *result = NULL;
     boost::uuids::random_generator generator;
     boost::uuids::uuid uniqueId = generator();
     std::string tempFilePath = "/tmp/" + boost::uuids::to_string(uniqueId);
     
+    // Retrieve selected version 
     retrieveFile(filePath, tempFilePath, versionNum, connection);
-    sql::PreparedStatement *pstmt = NULL;
-    sql::ResultSet *result = NULL;
-
+    
     uint32_t fileHash;
     int refNumber = versionNum;
     int numOfVersions;
     std::size_t length;
+    std::vector<int> versionID;
     
     if (compressFile(filePath, tempFilePath)){
+        // SELECT data needed to update filerec table
         const char* selectVersionRec = "SELECT * FROM `versionrec` WHERE `fileref`=? AND `versionnum`=?";
         pstmt = connection->prepareStatement(selectVersionRec);
         pstmt->setString(1, filePath);
@@ -267,6 +270,7 @@ bool FileArchiver::setReference(const std::string filePath, int versionNum, std:
         delete pstmt;
         delete result;
 
+        // UPDATE filerec table
         const char* updateFileRec = "UPDATE `filerec` SET `ovhash`=?, `currentversion`=?, `nversion`=?, `length`=?, `filedata`=? WHERE `filename`=?";     
         pstmt = connection->prepareStatement(updateFileRec);
         pstmt->setUInt64(1, fileHash);
@@ -281,57 +285,72 @@ bool FileArchiver::setReference(const std::string filePath, int versionNum, std:
         pstmt->executeUpdate();
         delete pstmt;
         std::remove(tempFilePath.c_str());
-    }
     
-    const char* updateComments = "UPDATE `versionrec` SET `commenttxt`=? WHERE `fileref`=? AND `versionnum`=?";
-    pstmt = connection->prepareStatement(updateComments);
-    pstmt->setString(1, comment);
-    pstmt->setString(2, filePath);
-    pstmt->setInt(3, versionNum);
-    pstmt->executeUpdate();
-    delete pstmt;
-    
-    const char* updateFileBlkHashes = "UPDATE `fileblkhashes` SET `hashval`=? WHERE `fileref`=?";
-    pstmt = connection->prepareStatement(updateFileBlkHashes);
-    pstmt->setUInt64(1, fileHash);
-    pstmt->setString(2, filePath);
-    pstmt->executeUpdate();
-    delete pstmt;
-    
-    std::vector<int> versionID;
-    const char* selectID = "SELECT idversionrec FROM `versionrec` WHERE `fileref`=? AND `versionnum`<=?";
-    pstmt = connection->prepareStatement(selectID);
-    pstmt->setString(1, filePath);
-    pstmt->setInt(2, versionNum);
-    result = pstmt->executeQuery();
-    while(result->next()){
-        int temp = result->getInt(1);
-        versionID.push_back(temp);
-    }
-    delete result;
-    delete pstmt;
-    
-    if(versionID.size() > 0){
-        const char* removeBlkTable = "DELETE FROM `blktable` WHERE `version`=?";
-        pstmt = connection->prepareStatement(removeBlkTable);
+        // UPDATE versionrec table
+        const char* updateComments = "UPDATE `versionrec` SET `commenttxt`=? WHERE `fileref`=? AND `versionnum`=?";
+        pstmt = connection->prepareStatement(updateComments);
+        pstmt->setString(1, comment);
+        pstmt->setString(2, filePath);
+        pstmt->setInt(3, versionNum);
+        pstmt->executeUpdate();
+        delete pstmt;
+
+        // DELETE and INSERT new data to fileblkhashes table
+        const char* deleteOldFileBlkHashes = "DELETE FROM `fileblkhashes` WHERE `fileref`=?";
+        pstmt = connection->prepareStatement(deleteOldFileBlkHashes);
+        pstmt->setString(1, filePath);
+        pstmt->executeUpdate();
+        delete pstmt;
         
-        std::vector<int>::const_iterator it1;
-        for(it1 = versionID.begin(); it1 != versionID.end(); it1++){
-            pstmt->setInt(1, *it1);
+        std::vector<uint32_t> blockHashes;
+        blockHashes = calculateFileBlockHashes(filePath);
+        const char* putfileblkhashes = "insert into fileblkhashes values(?,?,?,?)"; 
+        pstmt = connection->prepareStatement(putfileblkhashes);
+        for (int i = 0; i < blockHashes.size(); ++i) {
+            pstmt->setInt(1, NULL);    
+            pstmt->setString(2, filePath);
+            pstmt->setInt(3, i);
+            pstmt->setUInt64(4, blockHashes[i]);
             pstmt->executeUpdate();
         }
         delete pstmt;
-        
-        const char* removeVersionRec = "DELETE FROM `versionrec` WHERE `idversionrec`=? AND versionNUm<>?";
-        pstmt = connection->prepareStatement(removeVersionRec);
-        
-        std::vector<int>::const_iterator it2;
-        for(it2 = versionID.begin(); it2 != versionID.end(); it2++){
-                pstmt->setInt(1, *it2);
-                pstmt->setInt(2, versionNum);
-                pstmt->executeUpdate();
+
+        // SELECT idversionrec needed to remove from versionrec and blktable table
+        const char* selectID = "SELECT idversionrec FROM `versionrec` WHERE `fileref`=? AND `versionnum`<=?";
+        pstmt = connection->prepareStatement(selectID);
+        pstmt->setString(1, filePath);
+        pstmt->setInt(2, versionNum);
+        result = pstmt->executeQuery();
+        while(result->next()){
+            int temp = result->getInt(1);
+            versionID.push_back(temp);
         }
+        delete result;
         delete pstmt;
+
+        // DELETE useless data from blktable and versionrec table.
+        if(versionID.size() > 0){
+            const char* removeBlkTable = "DELETE FROM `blktable` WHERE `version`=?";
+            pstmt = connection->prepareStatement(removeBlkTable);
+
+            std::vector<int>::const_iterator it1;
+            for(it1 = versionID.begin(); it1 != versionID.end(); it1++){
+                pstmt->setInt(1, *it1);
+                pstmt->executeUpdate();
+            }
+            delete pstmt;
+
+            const char* removeVersionRec = "DELETE FROM `versionrec` WHERE `idversionrec`=? AND versionNUm<>?";
+            pstmt = connection->prepareStatement(removeVersionRec);
+
+            std::vector<int>::const_iterator it2;
+            for(it2 = versionID.begin(); it2 != versionID.end(); it2++){
+                    pstmt->setInt(1, *it2);
+                    pstmt->setInt(2, versionNum);
+                    pstmt->executeUpdate();
+            }
+            delete pstmt;
+        }
     }
     
     connection->close();
