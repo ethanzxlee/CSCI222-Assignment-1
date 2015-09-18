@@ -191,7 +191,7 @@ void MainWindow::retrieveVersion()
         directoryPath.append('/');
         directoryPath.append(fileName);
         file.retrieveFile(fileSelect.toStdString(), directoryPath.toStdString(),
-                fileVersionSelectedInTable);
+                data->at(fileVersionSelectedInTable).getVersionNumber());
         
         QString status="The file successfully retrieved  . . . .100%";
         widget.statusBar->showMessage(status);
