@@ -236,7 +236,7 @@ bool FileArchiver::setReference(const std::string filePath, int versionNum, std:
     boost::uuids::uuid uniqueId = generator();
     std::string tempFilePath = "/tmp/" + boost::uuids::to_string(uniqueId);
     
-    // Retrieve selected version 
+    //  Retrieve selected version  
     retrieveFile(filePath, tempFilePath, versionNum, connection);
     
     uint32_t fileHash;
