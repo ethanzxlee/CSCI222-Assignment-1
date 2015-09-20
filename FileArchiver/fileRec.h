@@ -5,7 +5,6 @@
 
 #include "mysql_connection.h"
 #include "mysql_driver.h"
-#include "MurMurHash3.h"
 #include "versionRec.h"
 
 class fileRec {

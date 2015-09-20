@@ -15,17 +15,11 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include "MurMurHash3.h"
 
 /**
  * Can be either 4096 or 8192
  */
-const int BLOCK_SIZE = 4096;
-
-/**
- * Arbitrarily chosen
- */
-const uint32_t SEED_VALUE = 42;
+const int BLOCK_SIZE = 8192;
 
 struct Block {
     int blockNum;

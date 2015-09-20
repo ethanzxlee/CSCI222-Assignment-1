@@ -5,26 +5,25 @@
  * Created on September 3, 2015, 1:51 AM
  */
 #include <boost/filesystem.hpp>
+#include <boost/crc.hpp>
 
 #include "helperFuncs.h"
 
-/**
- * TODO: don't allocate space for the entire file
- */
 uint32_t calculateFileHash(const std::string& filePath)
-{  
-    uint32_t hash[4];
-    int fileLength = fileSize(filePath);
-    std::ifstream file(filePath.c_str(), std::ios::binary);   
-    char* key = new char[fileLength];
-    file.read(key, fileLength);    
-    MurmurHash3_x86_128(key, fileLength, SEED_VALUE, hash);
-    delete [] key;
+{      
+    boost::crc_32_type result;
+    std::ifstream ifs(filePath.c_str(), std::ios::binary);
 
-    /*
-     * There are 4 hash's only using the first one atm
-     */
-     return hash[0];
+    if (ifs.good())
+    {
+	do
+	{
+            char buffer[BLOCK_SIZE];
+            ifs.read(buffer, BLOCK_SIZE);
+            result.process_bytes(buffer, ifs.gcount());
+	} while (ifs.good());
+    }
+    return result.checksum();
 }
 
 std::size_t fileSize(const std::string& filePath)
@@ -40,26 +39,20 @@ long int getFileModifyTime(const std::string& filePath)
 
 std::vector<uint32_t> calculateFileBlockHashes(const std::string& filePath)
 {
-    std::size_t length = fileSize(filePath);
-    std::ifstream file(filePath.c_str(), std::ios::binary);
+    std::ifstream ifs(filePath.c_str(), std::ios::binary);
     std::vector<uint32_t> blockHashes;
-    uint32_t hash[4];
-    char key[BLOCK_SIZE];
+    char buffer[BLOCK_SIZE];
    
-    while (file.read((char *)key, BLOCK_SIZE))
+    while (ifs.read(buffer, BLOCK_SIZE))
     {
-        MurmurHash3_x86_128(key, BLOCK_SIZE, SEED_VALUE, hash);
-     
-        /**
-         * Currently only using the first hash, there is 4 tho
-         */
-        blockHashes.push_back(hash[0]);
+        boost::crc_32_type result;
+        result.process_bytes(buffer, ifs.gcount());
+        blockHashes.push_back(result.checksum());
     }
-    
-    //This will be the remaining portion that wasn't a full BLOCK_SIZE bytes
-    std::size_t extra = length - (BLOCK_SIZE*(length / BLOCK_SIZE));
-    MurmurHash3_x86_128(key, extra, SEED_VALUE, hash);
-    blockHashes.push_back(hash[0]);
+
+    boost::crc_32_type result;
+    result.process_bytes(buffer, ifs.gcount());    
+    blockHashes.push_back(result.checksum());
 
     return blockHashes;
 }
