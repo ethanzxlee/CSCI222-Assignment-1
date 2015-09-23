@@ -42,8 +42,11 @@ QVariant TableModel::headerData(int section, Qt::Orientation orientation, int ro
 QVariant TableModel::data(const QModelIndex &index, int role)const{
     if (role == Qt::TextAlignmentRole )
     {
+        if(index.column()==4 && recordsCollection->at(index.row()).getComment()=="-")
+            return Qt::AlignCenter;
         if(index.column()==4)
             return Qt::AlignVCenter;
+            
         return Qt::AlignCenter;
     }
     if(role==Qt::DisplayRole){

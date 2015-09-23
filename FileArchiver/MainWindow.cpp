@@ -100,6 +100,8 @@ void MainWindow::saveCurrent()
    
     if(ok)
     {    
+        if(comment.isEmpty())
+            comment="-";
         bool exist = file.exists(fileSelect.toStdString());
         if(exist)
         {
@@ -237,7 +239,8 @@ void MainWindow::setAsReference()
         bool ok;
         QString comment = QInputDialog::getText(this,"GetCommentForm","Comment",
                             QLineEdit::Normal,"comment", &ok);
-
+        if(comment.isEmpty())
+            comment="-";
         if(ok)
         {
             bool success = file.setReference(fileSelect.toStdString(), 
