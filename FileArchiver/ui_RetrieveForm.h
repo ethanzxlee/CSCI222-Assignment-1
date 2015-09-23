@@ -14,6 +14,7 @@
 #include <QtGui/QApplication>
 #include <QtGui/QButtonGroup>
 #include <QtGui/QDialog>
+#include <QtGui/QDialogButtonBox>
 #include <QtGui/QHeaderView>
 #include <QtGui/QLabel>
 #include <QtGui/QLineEdit>
@@ -29,8 +30,7 @@ public:
     QLineEdit *directoryField;
     QLineEdit *fileNameField;
     QPushButton *selectFileButton;
-    QPushButton *okButton;
-    QPushButton *cancelButton;
+    QDialogButtonBox *buttonBox;
 
     void setupUi(QDialog *RetrieveForm)
     {
@@ -53,12 +53,10 @@ public:
         selectFileButton = new QPushButton(RetrieveForm);
         selectFileButton->setObjectName(QString::fromUtf8("selectFileButton"));
         selectFileButton->setGeometry(QRect(440, 30, 111, 27));
-        okButton = new QPushButton(RetrieveForm);
-        okButton->setObjectName(QString::fromUtf8("okButton"));
-        okButton->setGeometry(QRect(460, 230, 98, 27));
-        cancelButton = new QPushButton(RetrieveForm);
-        cancelButton->setObjectName(QString::fromUtf8("cancelButton"));
-        cancelButton->setGeometry(QRect(330, 230, 98, 27));
+        buttonBox = new QDialogButtonBox(RetrieveForm);
+        buttonBox->setObjectName(QString::fromUtf8("buttonBox"));
+        buttonBox->setGeometry(QRect(370, 240, 176, 27));
+        buttonBox->setStandardButtons(QDialogButtonBox::Cancel|QDialogButtonBox::Ok);
 
         retranslateUi(RetrieveForm);
 
@@ -71,8 +69,6 @@ public:
         label->setText(QApplication::translate("RetrieveForm", "Directory", 0, QApplication::UnicodeUTF8));
         label_2->setText(QApplication::translate("RetrieveForm", "Filename", 0, QApplication::UnicodeUTF8));
         selectFileButton->setText(QApplication::translate("RetrieveForm", "Select Directory", 0, QApplication::UnicodeUTF8));
-        okButton->setText(QApplication::translate("RetrieveForm", "OK", 0, QApplication::UnicodeUTF8));
-        cancelButton->setText(QApplication::translate("RetrieveForm", "Cancel", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };

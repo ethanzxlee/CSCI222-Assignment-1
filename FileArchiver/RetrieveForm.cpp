@@ -11,8 +11,8 @@ RetrieveForm::RetrieveForm() {
     widget.setupUi(this);
 
     connect(widget.selectFileButton,SIGNAL(clicked()),this, SLOT(selectionDir()));
-    connect(widget.cancelButton,SIGNAL(clicked()),this, SLOT(cancelFunc()));
-    connect(widget.okButton,SIGNAL(clicked()),this, SLOT(okFunc()));
+    connect(widget.buttonBox,SIGNAL(accepted()),this, SLOT(accept()));
+    connect(widget.buttonBox,SIGNAL(rejected()),this, SLOT(reject()));
 }
 
 RetrieveForm::~RetrieveForm() {
@@ -29,14 +29,14 @@ void RetrieveForm::selectionDir()
     directoryPath = pathDir;
 }
 
-void RetrieveForm::cancelFunc()
+void RetrieveForm::reject()
 {
     fileName="";
     directoryPath="";
     QDialog::reject();
 }
 
-void RetrieveForm::okFunc()
+void RetrieveForm::accept()
 {
     fileName = widget.fileNameField->text().trimmed();
     QDialog::accept();

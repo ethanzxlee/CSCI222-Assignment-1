@@ -22,7 +22,9 @@ public:
     virtual ~RetrieveForm();
     QString getFilename();
     QString getDirectoryPath();
-
+signals:
+    void accepted();
+    void rejected();
 public slots:
     /**
      * Function similar to selectFile in MainWindow class
@@ -34,13 +36,13 @@ public slots:
      * Function for button "Ok"
      * save the information filled in by user
      */
-    void okFunc();
+    void accept();
     
     /**
      * Function for button "Cancel"
      * The information filled will be deleted
      */
-    void cancelFunc();
+    void reject();
 private:
     QString fileName;
     QString directoryPath;

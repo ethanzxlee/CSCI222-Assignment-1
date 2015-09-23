@@ -7,6 +7,7 @@
 
 #include "MainWindow.h"
 #include "RetrieveForm.h"
+#include "GetCommentForm.h"
 #include <string>
 MainWindow::MainWindow(std::vector<versionRec>* Data) {
     data=Data;
@@ -94,14 +95,13 @@ void MainWindow::saveCurrent()
             QMessageBox::Ok,QMessageBox::Cancel);
         return ;
     }
-    bool ok;
-    QString comment = QInputDialog::getText(this,"GetCommentForm","Comment",
-                        QLineEdit::Normal,"comment", &ok);
-   
+    GetCommentForm *gcf = new GetCommentForm;
+    gcf->exec();
+
+    QString comment = gcf->getComment();
+    bool ok = gcf->getOk();
     if(ok)
     {    
-        if(comment.isEmpty())
-            comment="-";
         bool exist = file.exists(fileSelect.toStdString());
         if(exist)
         {
@@ -230,17 +230,17 @@ void MainWindow::setAsReference()
             QMessageBox::Ok,QMessageBox::Cancel);
         return;
     }
-    QMessageBox::StandardButton reply=QMessageBox::question(parent,
+    QMessageBox::StandardButton reply=QMessageBox::information(parent,
             "Set reference version","Set reference version",
-            QMessageBox::Ok|QMessageBox::No);
+            QMessageBox::Ok|QMessageBox::Cancel);
     
     if(reply == QMessageBox::Ok)
     {
-        bool ok;
-        QString comment = QInputDialog::getText(this,"GetCommentForm","Comment",
-                            QLineEdit::Normal,"comment", &ok);
-        if(comment.isEmpty())
-            comment="-";
+        GetCommentForm *gcf = new GetCommentForm;
+        gcf->exec();
+
+        QString comment = gcf->getComment();
+        bool ok = gcf->getOk();
         if(ok)
         {
             bool success = file.setReference(fileSelect.toStdString(), 
@@ -255,7 +255,7 @@ void MainWindow::setAsReference()
                 msg.append(" drop successfully");
                 QMessageBox::information(this,fileSelect,msg.c_str(),
                     QMessageBox::Ok,QMessageBox::Cancel);
-                
+
                 QString status="The file version ";
                 status.append(converter.str().c_str());
                 msg = " successfully set as reference";
@@ -264,7 +264,7 @@ void MainWindow::setAsReference()
             }
             else
             {
-                
+
                 std::string msg = "There are error(s) occur. The function is aborted";
                 QMessageBox::critical(this,fileSelect,msg.c_str(),
                     QMessageBox::Ok,QMessageBox::Cancel);
@@ -273,12 +273,15 @@ void MainWindow::setAsReference()
         }
         else
         {
-            QMessageBox msgBox;
-            std::string errorMessage = "The user must click 'Ok' in GetCommentForm.";
-            msgBox.setWindowTitle("Error!");
-            msgBox.setText("Incomplete Progress");
-            msgBox.setDetailedText(errorMessage.c_str());
-            msgBox.exec();
+            std::string msg = "There are insufficient information provided to complete the feature";
+            QMessageBox::critical(this,"Error",msg.c_str(),
+                QMessageBox::Ok,QMessageBox::Cancel);
         }
-    }    
+    }  
+    else
+    {
+        std::string msg = "The user must click 'Ok' in order to set as reference";
+        QMessageBox::critical(this,"Error",msg.c_str(),
+            QMessageBox::Ok,QMessageBox::Cancel);
+    }
 }
