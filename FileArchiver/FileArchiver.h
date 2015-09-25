@@ -12,7 +12,7 @@
 #include <fstream>
 #include <stdio.h>
 #include <vector>
-#include <QByteArray>
+#include <qt4/Qt/qbytearray.h>
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/copy.hpp>
 #include <boost/iostreams/filter/gzip.hpp>

@@ -5,13 +5,12 @@
                    displayName="Header Files"
                    projectFiles="true">
       <itemPath>FileArchiver.h</itemPath>
+      <itemPath>GetCommentForm.h</itemPath>
       <itemPath>MainWindow.h</itemPath>
-      <itemPath>MurMurHash3.h</itemPath>
       <itemPath>RetrieveForm.h</itemPath>
       <itemPath>TableModel.h</itemPath>
       <itemPath>fileRec.h</itemPath>
       <itemPath>helperFuncs.h</itemPath>
-      <itemPath>md5.h</itemPath>
       <itemPath>ui_MainWindow.h</itemPath>
       <itemPath>ui_RetrieveForm.h</itemPath>
       <itemPath>versionRec.h</itemPath>
@@ -23,6 +22,7 @@
         <itemPath>images/saved.jpg</itemPath>
         <itemPath>images/unsaved.jpg</itemPath>
       </logicalFolder>
+      <itemPath>GetCommentForm.ui</itemPath>
       <itemPath>MainWindow.ui</itemPath>
       <itemPath>RetrieveForm.ui</itemPath>
     </logicalFolder>
@@ -30,12 +30,11 @@
                    displayName="Source Files"
                    projectFiles="true">
       <itemPath>FileArchiver.cpp</itemPath>
+      <itemPath>GetCommentForm.cpp</itemPath>
       <itemPath>MainWindow.cpp</itemPath>
-      <itemPath>MurMurHash3.cpp</itemPath>
       <itemPath>RetrieveForm.cpp</itemPath>
       <itemPath>TableModel.cpp</itemPath>
       <itemPath>fileRec.cpp</itemPath>
-      <itemPath>fileRecTestRun.cpp</itemPath>
       <itemPath>helperFuncs.cpp</itemPath>
       <itemPath>main.cpp</itemPath>
       <itemPath>versionRec.cpp</itemPath>
@@ -91,15 +90,17 @@
       </item>
       <item path="FileArchiver.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="GetCommentForm.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="GetCommentForm.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="GetCommentForm.ui" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="MainWindow.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="MainWindow.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="MainWindow.ui" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="MurMurHash3.cpp" ex="false" tool="1" flavor2="0">
-      </item>
-      <item path="MurMurHash3.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="RetrieveForm.cpp" ex="false" tool="1" flavor2="0">
       </item>
@@ -115,8 +116,6 @@
       </item>
       <item path="fileRec.h" ex="false" tool="3" flavor2="0">
       </item>
-      <item path="fileRecTestRun.cpp" ex="false" tool="1" flavor2="0">
-      </item>
       <item path="helperFuncs.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="helperFuncs.h" ex="false" tool="3" flavor2="0">
@@ -126,8 +125,6 @@
       <item path="images/unsaved.jpg" ex="false" tool="3" flavor2="0">
       </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="0">
-      </item>
-      <item path="md5.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="ui_MainWindow.h" ex="false" tool="3" flavor2="0">
       </item>
@@ -175,15 +172,17 @@
       </item>
       <item path="FileArchiver.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="GetCommentForm.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="GetCommentForm.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="GetCommentForm.ui" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="MainWindow.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="MainWindow.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="MainWindow.ui" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="MurMurHash3.cpp" ex="false" tool="1" flavor2="0">
-      </item>
-      <item path="MurMurHash3.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="RetrieveForm.cpp" ex="false" tool="1" flavor2="0">
       </item>
@@ -199,8 +198,6 @@
       </item>
       <item path="fileRec.h" ex="false" tool="3" flavor2="0">
       </item>
-      <item path="fileRecTestRun.cpp" ex="false" tool="1" flavor2="0">
-      </item>
       <item path="helperFuncs.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="helperFuncs.h" ex="false" tool="3" flavor2="0">
@@ -210,8 +207,6 @@
       <item path="images/unsaved.jpg" ex="false" tool="3" flavor2="0">
       </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="0">
-      </item>
-      <item path="md5.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="ui_MainWindow.h" ex="false" tool="3" flavor2="0">
       </item>

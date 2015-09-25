@@ -12,7 +12,7 @@
 FileArchiver::FileArchiver() throw (sql::SQLException) {
     DB_HOSTNAME = "tcp://127.0.0.1:3306";
     DB_USERNAME = "root";
-    DB_PASSWORD = "";
+    DB_PASSWORD = "1qaz2wsxmko0nji9";
     DB_SCHEMA = "FileArchiver";
 
     sql::Connection* connection = connectDB(true);
