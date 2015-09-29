@@ -351,10 +351,14 @@ bool FileArchiver::setReference(const std::string filePath, int versionNum, std:
             }
             delete pstmt;
         }
+
+        connection->close();
+    	return true;
+    }else{
+    	std::remove(tempFilePath.c_str());
+    	connection->close();
+    	return false;
     }
-    
-    connection->close();
-    return true;
 }
 
 std::vector<versionRec> FileArchiver::getVersionInfo(const std::string& filePath) throw (sql::SQLException) {
