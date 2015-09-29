@@ -26,7 +26,7 @@ CPPUNIT_TEST_SUITE_REGISTRATION(newtestclass);
 /* SETUP YOUR SQL LOGIN HERE */
 std::string _ipAddress = "tcp://127.0.0.1:3306";
 std::string _userName = "root";
-std::string _password = "       ";
+std::string _password = "lancegao037#";
 /*****************************/
 
 /*************************/

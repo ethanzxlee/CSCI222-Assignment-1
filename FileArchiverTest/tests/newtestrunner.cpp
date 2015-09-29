@@ -1,8 +1,8 @@
 /*
  * File:   newtestrunner.cpp
- * Author: zhexian
+ * Author: giritharan
  *
- * Created on 25/09/2015, 2:36:49 PM
+ * Created on 28/09/2015, 9:16:27 PM
  */
 
 #include <cppunit/BriefTestProgressListener.h>
