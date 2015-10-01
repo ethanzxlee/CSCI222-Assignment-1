@@ -145,8 +145,3 @@ void versionRec::getExistingBlocks()
         blocks.push_back(block);
     } while(rs->next());
 }
-
-
-
-
-

@@ -40,7 +40,6 @@ public:
     
     /**
      * Getters
-     * TODO: delete unused ones
      */
     std::string getFileReg() { return fileRef; }
     int getVersionNumber() { return versionNumber; }
@@ -53,7 +52,6 @@ public:
     
     /**
      * Setters
-     * TODO: delete unused ones
      */
     void setFileRef(const std::string& x) { fileRef = x; }
     void setVersionNumber(const int& x) { versionNumber = x; }
@@ -62,12 +60,10 @@ public:
     void setHash(const uint32_t& x) { fileHash = x; }   
     void setComment(const std::string & x){ comment=x;}
     void setSymbol(int x){ symbolDecision = x;}
-    /**
-     * This is meant to be private currently public for testing purposes
-     */
-    void saveBlocks();
+    
 private:
     void getExistingBlocks();
+    void saveBlocks();
     
     int idVersionRec;
     std::string fileRef;

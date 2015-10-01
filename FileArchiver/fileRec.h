@@ -53,7 +53,6 @@ public:
     
     /**
      * Setters
-     * NOTE: not sure which ones are needed atm
      */
     void setTempPath(const std::string& x) { tempPath = x; }
     void setModifyTime(const long int& x) { modifyTime = x; }
@@ -66,7 +65,6 @@ public:
 
     /**
      * Getters
-     * NOTE: not sure which ones are needed atm
      */
     std::string getTempPath() { return tempPath; }
     long int getModifyTime() { return modifyTime; }
@@ -79,13 +77,6 @@ public:
     std::vector<int> getVersionIds() { return versionIds; }
     std::vector<std::string> getComments() { return comments; }
 
-    
-    /*
-     * NOTE: Not sure if still needed, or if it is it needs to take in a sql con
-     * @param filePath The filepath to the original version of the file requested
-     * @return  A new fileRec* with all members filled out
-    */
-    static fileRec* getFile(const std::string& filePath) throw(const char*);
 private:
     std::string filePath;
     std::string tempPath;

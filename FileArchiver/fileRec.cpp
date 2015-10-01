@@ -122,15 +122,4 @@ std::vector<versionRec> fileRec::returnVector(const std::string&filePath, int en
     return returnRec;
 }
 
-/*
- * TODO: is this still needed at all?
- * It also may not have a valid dbcon.
- */
-fileRec* fileRec::getFile(const std::string& filePath) throw(const char*)
-{        
-    fileRec* returnFile = new fileRec;
-    returnFile->createExisting(filePath, dbcon);
-    return returnFile;
-}
-
 sql::Connection *fileRec::dbcon = NULL;
